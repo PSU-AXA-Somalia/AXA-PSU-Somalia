@@ -5,13 +5,15 @@
 # point specific data for a range of satellite products from the IRI data library
 #================================================================================
 
+dir_Output_data <- paste(dir_Runset,"0_Data",sep=computer_sep)
+
 #--------------------------------------------------------------------------------
 # Set up download locations - feel free to add more
 #--------------------------------------------------------------------------------
  # U. Reading TAMSAT3 - 1983-present, Africa only  
  # IR only, but calibrated against extensive gauge sources
  satellites <- data.frame(Name="TAMSAT",
-                          Web="http://iridl.ldeo.columbia.edu/SOURCES/.Reading/.Meteorology/.TAMSAT/.v3p0/.daily/.rfe",
+                          Web="http://iridl.ldeo.columbia.edu/SOURCES/.Reading/.Meteorology/.TAMSAT/.v3p1/.daily/.rfe_filled",
                           Date="%d %b %Y")
  
  # NOAA ARC2 - 1983-present, Africa only
@@ -91,9 +93,10 @@
         dataout <- merge(dataout,satellite_container[[s]],by="Date",all.x=TRUE,all.y=TRUE)
     }
     
-    fname <- paste("pointdata_",location$lon[n],"_",location$lat[n],sep="")
+    fname <- paste("IRIpointraw",runset,sep="")
     fname <- paste(str_replace_all(fname,"\\.","-"),".csv",sep="")
-    write.csv(dataout,fname,row.names=FALSE,quote=FALSE)
+    filename <- paste(dir_Output_data,fname,sep=computer_sep)
+    write.csv(dataout,filename,row.names=FALSE,quote=FALSE)
     
  }   
  
