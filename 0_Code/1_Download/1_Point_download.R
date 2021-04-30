@@ -1,39 +1,12 @@
 #================================================================================
 # AXA-XL - PSU Somalia Code
 # HLG April 2021
-# This script downloads (extracts?), collates and saves 
-# point specific data for a range of satellite products
+# This script downloads, collates and saves 
+# point specific data for a range of satellite products from the IRI data library
 #================================================================================
-#--------------------------------------------------------------------------------
-# Load libraries
-#--------------------------------------------------------------------------------
-rm(list=ls())
-library(chirps)
- 
 
 #--------------------------------------------------------------------------------
-# Choose Meta data
-#--------------------------------------------------------------------------------
-#--------------------------------------------------------
- # Location
- #--------------------------------------------------------
- location <- data.frame(lon = c(42.2362,42.2362),
-                        lat = c(3.5039,4 ))
-
- #--------------------------------------------------------
- # Time
- #--------------------------------------------------------
- startdate <- as.Date("2002-05-01")
- enddate   <- as.Date("2020-05-01")
-
- #--------------------------------------------------------
- # Are you on a windows or a mac? [ "/" for mac, "\\" for windows]
- #--------------------------------------------------------
- mac_sep <- "/" 
-
-
-#--------------------------------------------------------------------------------
-# Set up download locations
+# Set up download locations - feel free to add more
 #--------------------------------------------------------------------------------
  # U. Reading TAMSAT3 - 1983-present, Africa only  
  # IR only, but calibrated against extensive gauge sources
@@ -93,7 +66,7 @@ library(chirps)
        xystuff<-paste("Y/%28",Y,"%29VALUES/X/%28",X,"%29VALUES",sep="")
        postxyaddress<-"CopyStream/T+exch+table-+text+text+skipanyNaN+-table+.csv"
        
-       address<-paste(prexyaddress,timestuff,xystuff,postxyaddress,sep=mac_sep)
+       address<-paste(prexyaddress,timestuff,xystuff,postxyaddress,sep=computer_sep)
        
        
        #----------------------------------------

@@ -16,13 +16,14 @@ computer_sep <- "/"
 #--------------------------------------------------------
 
 # Top level
+#--------------------------------------------------------
 dir_0main           <- "."  
 dir_Code            <- paste(dir_0main,"0_Code",sep=computer_sep)
 dir_Output          <- paste(dir_0main,"..","AXA-PSU-Output",sep=computer_sep)
 
-
 # Code folder tree - hardwired
- dir_Output_template <- paste(dir_Code, "0_Template",sep=computer_sep)
+#--------------------------------------------------------
+ dir_Code_template <- paste(dir_Code, "0_Templates",sep=computer_sep)
  dir_Code_Download   <- paste(dir_Code, "1_Download",sep=computer_sep) 
  dir_Code_Extract    <- paste(dir_Code, "2_Extract",sep=computer_sep) 
  dir_Code_Analysis   <- paste(dir_Code, "3_Analysis",sep=computer_sep) 
@@ -30,24 +31,32 @@ dir_Output          <- paste(dir_0main,"..","AXA-PSU-Output",sep=computer_sep)
 
  
 # Output file tree creator 
-RunsetDir <- function(dir_Output,runset="Test",type="1_Point",create=TRUE,computer_sep="/"){ 
+#--------------------------------------------------------
+RunsetDirectory <- function(dir_Output,runset="Test",type="1_Point",create=TRUE,computer_sep="/"){ 
    #-----------------------------------------------------------------   
    # This both creates the folders from the template 
    # and sets up file locations
    #-----------------------------------------------------------------   
-   
    if(create== TRUE){
-      newdir <- paste(dir_Output,type,runset,sep=computer_sep) 
-      if(dir.exists(newdir)){stop(paste("ERROR! Runset: ",type,"/",runset," already exists. Re-name & try again",sep=""))}
-      dir.create(newdir)
-      file.copy(from=dir_Output_template, 
-                to=newdir, recursive=TRUE)
+      
+      # See if the file exists
+      dir_Runset <- paste(dir_Output,type,runset,sep=computer_sep) 
+      if(dir.exists(dir_Runset)){stop(paste("ERROR! Runset: ",type,"/",runset," already exists. Re-name & try again",sep=""))}
+      
+      # If not, create a new folder, copied over from templates
+      newdir <- paste(dir_Output,type,sep=computer_sep) 
+      file.copy(from=paste(dir_Code_template,type,sep=computer_sep),to=newdir, recursive=TRUE)
+      
+      # And rename
+      file.rename(from=paste(newdir,type,sep=computer_sep),to=dir_Runset)
+
+   }else{
+      dir_Runset <- paste(dir_Output,type,runset,sep=computer_sep) 
+      if(!dir.exists(dir_Runset)){stop(paste("ERROR! Runset: ",type,"/",runset," DOES NOT exist. Try again",sep=""))}
    }
-}  
-   dir_Runset            <- paste(dir_Output,type,sep=computer_sep)
-   dir_Runset_Download   <- paste(dir_Code, "0_Download",sep=computer_sep) 
-   dir_Runset_Extract    <- paste(dir_Code, "1_Extract",sep=computer_sep) 
-   dir_Runset_Analysis   <- paste(dir_Code, "2_Analysis",sep=computer_sep) 
-   dir_Runset_Dashboard  <- paste(dir_Code, "3_Dashboard",sep=computer_sep) 
-} 
+   return(dir_Runset)
+ }  
+ 
+ 
+ 
  
