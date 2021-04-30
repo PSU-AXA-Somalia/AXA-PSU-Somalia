@@ -1,4 +1,0 @@
-"0","```r
-Chirpsdensity <- raster(file.choose())
-plot(Chirpsdensity,xlim=c(42,43),ylim=c(3,4))
-```"

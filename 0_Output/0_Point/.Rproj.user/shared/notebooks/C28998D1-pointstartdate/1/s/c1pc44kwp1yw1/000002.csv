@@ -1,5 +1,0 @@
-"0","```r
-plot(rainpentad$chirpspentad,rainpentad$tamsatpentad,xlim=c(1,150),ylim=c(1,150),
-   #  asp=1,
-     col=rgb(0,0,0,.5),pch=16,cex=.5)
-```"

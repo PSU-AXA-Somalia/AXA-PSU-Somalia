@@ -1,5 +1,0 @@
-"0","```r
-plot(climatology$mean ~ climatology$doy, type=\"l\",lwd=2)
-plot(climatology$Q10 ~ climatology$doy, type=\"l\",lwd=2)
-
-```"

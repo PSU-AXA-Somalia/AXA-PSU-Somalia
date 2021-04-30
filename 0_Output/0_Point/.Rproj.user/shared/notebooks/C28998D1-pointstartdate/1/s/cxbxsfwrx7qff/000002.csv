@@ -1,5 +1,0 @@
-"0","```r
-plot(raindekad$chirpsdekad,raindekad$tamsatdekad,xlim=c(1,200),ylim=c(1,200),
-   #  asp=1,
-     col=rgb(0,0,0,.5),pch=16,cex=.5)
-```"

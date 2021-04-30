@@ -1,6 +1,0 @@
-"0","```r
-ggplot(chirpsgushort, aes(pentad, Year, fill= chirpspentad)) + 
-  geom_tile() + scale_fill_viridis() +
-  theme_ipsum()
-
-```"

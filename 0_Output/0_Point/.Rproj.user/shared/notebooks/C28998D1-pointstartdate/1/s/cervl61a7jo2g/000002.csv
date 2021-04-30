@@ -1,3 +1,0 @@
-"0","```r
-heatmaply(chirpsgumatrix,grid_gap = 1)
-```"

@@ -1,5 +1,0 @@
-"0","```r
-TAMSAT <- read.csv(\"/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Desktop/01-tamsatDaily.v3.1-407635200-1622588400_3.5039_42.2362.csv\")
-names(TAMSAT) <- c(\"date\",\"TAMSATRaw\",\"TAMSATFilled\")
-TAMSAT$date <- as.Date(TAMSAT$date)
-```"
