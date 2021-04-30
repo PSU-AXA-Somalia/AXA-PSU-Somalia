@@ -15,12 +15,14 @@ computer_sep <- "/"
 # but you can hardwire it without issue
 #--------------------------------------------------------
 
+#--------------------------------------------------------
 # Top level
 #--------------------------------------------------------
 dir_0main           <- "."  
 dir_Code            <- paste(dir_0main,"0_Code",sep=computer_sep)
 dir_Output          <- paste(dir_0main,"..","AXA-PSU-Output",sep=computer_sep)
 
+#--------------------------------------------------------
 # Code folder tree - hardwired
 #--------------------------------------------------------
  dir_Code_template <- paste(dir_Code, "0_Templates",sep=computer_sep)
@@ -29,7 +31,17 @@ dir_Output          <- paste(dir_0main,"..","AXA-PSU-Output",sep=computer_sep)
  dir_Code_Analysis   <- paste(dir_Code, "3_Analysis",sep=computer_sep) 
  dir_Code_Dashboard  <- paste(dir_Code, "4_Dashboard",sep=computer_sep) 
 
+#--------------------------------------------------------
+# Other satellite data
+#--------------------------------------------------------
+ InternalSat <- data.frame(Name="TAMSAT_SM",
+                           Location="/Volumes/Mac storage space/All_Data/2_Remote_Sensing/1_QC_data_daily/TAMSAT_SM_Full/SM_Layer_mean",
+                           PreAddress="smcl.mean.tamsat_nceo_da_wb_v1p0p1_",
+                           DateFormat="%Y%m%d",
+                           PostAddress=".tif")
+
  
+#--------------------------------------------------------
 # Output file tree creator 
 #--------------------------------------------------------
 RunsetDirectory <- function(dir_Output,runset="Test",type="1_Point",create=TRUE,computer_sep="/"){ 

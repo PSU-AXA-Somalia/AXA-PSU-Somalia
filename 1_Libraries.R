@@ -9,6 +9,7 @@ library(sp)
 library(sf)
 library(raster)
 library(chirps)
-
+library(exactextractr)
+library(rnaturalearth)
  
  

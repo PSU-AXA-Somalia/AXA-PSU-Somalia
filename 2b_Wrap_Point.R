@@ -19,30 +19,47 @@ rm(list=ls())
 
 
 #================================================================================
-# CODE - DO NOT EDIT BELOW THIS POINT 
-# Load the file/folder locations
-#--------------------------------------------------------------------------------
- source("1_Libraries.r")
- source("1_Locations.r")
+# SETUP-CODE - DO NOT EDIT BELOW THIS POINT 
+#================================================================================
+ # Load the file/folder locations
+ #--------------------------------------------------------------------------------
+  source("1_Libraries.r")
+  source("1_Locations.r")
 
-#--------------------------------------------------------------------------------
-# Make a runset name
-#--------------------------------------------------------------------------------
- runset <- paste("Point_",
+ #--------------------------------------------------------------------------------
+ # Make a runset name
+ #--------------------------------------------------------------------------------
+  runset <- paste("Point_",
                  sprintf("%07.3f", round(location$lon,3)),"-",sprintf("%07.3f", round(location$lat,3)),
                  "_",format.Date(startdate,"%Y"),"-",format.Date(enddate,"%Y"),
                  "_",format.Date(Sys.Date(),"%Y%m%d"),sep="")
- runset <- str_replace_all(runset,"\\.","")
+  runset <- str_replace_all(runset,"\\.","")
+  
+ #--------------------------------------------------------------------------------
+ # Create a runset output folder
+ #--------------------------------------------------------------------------------
+  dir_Runset <- RunsetDirectory(dir_Output,runset=runset,type="1_Point",create=FALSE)
  
+ #--------------------------------------------------------------------------------
+ # Make spatial  versions of the location files
+ #--------------------------------------------------------------------------------
+  location.sp <- location
+  coordinates(location.sp) <- c("lon","lat")
+  proj4string(location.sp) <- CRS("+init=epsg:4326")
+  location.sf <- st_as_sf(location.sp)
+  
 #--------------------------------------------------------------------------------
-# Create a runset output folder
+# Make date list
 #--------------------------------------------------------------------------------
- dir_Runset <- RunsetDirectory(dir_Output,runset=runset,type="1_Point",create=FALSE)
- 
+  datelist <- seq(from=startdate,to=enddate,by="d")  
+  
+#================================================================================
+# MAJOR CODE
+#================================================================================
  #--------------------------------------------------------------------------------
  # Download the data and save
  #--------------------------------------------------------------------------------
- 
+ #source(paste(dir_Code_Download,"1_Point_download.r",sep=computer_sep))
  
  
  
