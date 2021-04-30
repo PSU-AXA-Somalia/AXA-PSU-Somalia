@@ -1,0 +1,7 @@
+"0","```r
+png(\"PentadTAMSATCHIRPS_season.png\",width=7,height=7,units=\"in\",res=250,pointsize=10)
+
+grid.arrange(p1, p2, nrow = 2) 
+dev.off()
+
+```"

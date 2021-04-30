@@ -1,0 +1,4 @@
+"0","```r
+dailyamounts <- split(rain$chirps,rain$doy)
+dailyamounts[90:120]
+```"

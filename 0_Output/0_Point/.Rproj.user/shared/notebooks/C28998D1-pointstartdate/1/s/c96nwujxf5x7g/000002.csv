@@ -1,0 +1,38 @@
+"0","```r
+
+png(\"PentadTAMSATCHIRPS_raindaysclim_.png\",width=5,height=7,units=\"in\",res=200,pointsize=10)
+par(mfrow=c(2,1),mar=c(3,3,2.5,1))
+
+plot(pentadclimate$chirpsperrain*100~pentadclimate$pentad,pch=16,cex=.6,
+     col=\"black\",type=\"l\",mgp=c(1.75,.35,0),ylim=c(0,100),
+     axes=FALSE,xlab=\"Month of year\",ylab=\"% years recording rain\",
+     main=list(paste(\"CHIRPS Climataological percentage of rainy pentads (\",min(raindaily$Year),\":\",max(raindaily$Year),\")\",sep=\"\"),cex=.9))
+axis(2,mgp=c(1.75,.35,0),tcl=-.25)
+axis(1,at=seq(0,72,by=6),labels=rep(\"\",13))
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$chirpsperrain*100~pentadclimate$pentad,col=\"black\",lwd=1)
+lines(pentadclimate$chirpsperrain5*100~pentadclimate$pentad,col=\"red\",lwd=1)
+lines(pentadclimate$chirpsperrain20*100~pentadclimate$pentad,col=\"blue\",lwd=1)
+
+legend(\"topright\",lwd=c(1,1,1),col=c(\"black\",\"red\",\"blue\"),
+       legend=c(\"Any rain\",\"> 5mm per pentad\",\">20mm per pentad\"),cex=.6)
+
+box()
+
+plot(pentadclimate$tamsatperrain*100~pentadclimate$pentad,pch=16,cex=.6,
+     col=\"black\",type=\"l\",mgp=c(1.75,.35,0),ylim=c(0,100),
+     axes=FALSE,xlab=\"Month of year\",ylab=\"% years recording rain\",
+     main=list(paste(\"TAMSAT Climataological percentage of rainy pentads (\",min(raindaily$Year),\":\",max(raindaily$Year),\")\",sep=\"\"),cex=.9))
+axis(2,mgp=c(1.75,.35,0),tcl=-.25)
+axis(1,at=seq(0,72,by=6),labels=rep(\"\",13))
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$tamsatperrain*100~pentadclimate$pentad,col=\"black\",lwd=1)
+lines(pentadclimate$tamsatperrain5*100~pentadclimate$pentad,col=\"red\",lwd=1)
+lines(pentadclimate$tamsatperrain20*100~pentadclimate$pentad,col=\"blue\",lwd=1)
+
+legend(\"topright\",lwd=c(1,1,1),col=c(\"black\",\"red\",\"blue\"),
+       legend=c(\"Any rain\",\"> 5mm per pentad\",\">20mm per pentad\"),cex=.6)
+
+box()
+dev.off()
+```"

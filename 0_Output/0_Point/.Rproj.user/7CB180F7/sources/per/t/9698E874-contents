@@ -1,0 +1,530 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# Load libraries
+
+```{r,message=FALSE,warning=FALSE}
+library(chirps)
+library(tidyverse)
+library(plotly)
+library(heatmaply)
+library(hrbrthemes)
+library(sf)
+library(sp)
+library(raster)
+library(gridExtra)                       
+```
+
+# Set up daily files for location
+
+Currently set up for point values. Also set it up for a region
+
+```{r}
+lonlat <- data.frame(lon = c(42.2362),lat=c(3.5039))
+```
+
+## Point SM
+
+
+
+```{r}
+# TAMSAT Soil Moisture
+SMfile <- "/Volumes/Mac storage space/All_Data/2_Remote_Sensing/1_QC_data_daily/TAMSAT_SM_Full/SM_Layer_mean"
+SMfiles <- list.files(SMfile)[grep(".tif",list.files(SMfile))]
+SMData <- data.frame(date=as.Date(substr(SMfiles,
+                                         start=(nchar(SMfiles)-11),
+                                         stop=(nchar(SMfiles)-4)),"%Y%m%d"),
+                     SM = NA)
+
+#for(n in 1:length(SMfiles)){
+#   tmp <- 
+#}#
+
+
+```
+## TAMSAT
+```{r}
+TAMSAT <- read.csv("/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Desktop/01-tamsatDaily.v3.1-407635200-1622588400_3.5039_42.2362.csv")
+names(TAMSAT) <- c("date","TAMSATRaw","TAMSATFilled")
+TAMSAT$date <- as.Date(TAMSAT$date)
+```
+
+
+
+
+```{r}
+# For a point
+lonlat <- data.frame(lon = c(42.2362),lat=c(3.5039))
+dates <- c("1983-01-01", "2021-03-01")
+#dt <- get_chirps(lonlat, dates)
+#chirps <- dt
+#chirps$date <- as.Date(chirps$date)
+#chirps <- chirps[-1]
+#raindaily <- get_chirps(lonlat, dates)
+```
+
+
+
+
+### Daily, Dekadal, Pentadal rainfall
+
+```{r}
+# Set up daily rainfall
+raindaily$Year   <- as.numeric(format.Date(raindaily$date,"%Y"))
+raindaily$Month   <- as.numeric(format.Date(raindaily$date,"%m"))
+raindaily$Day     <- as.numeric(format.Date(raindaily$date,"%d"))
+raindaily$Dekad   <- 3
+raindaily$Dekad[raindaily$Day <= 10] <- 1
+raindaily$Dekad[(raindaily$Day > 10)&(raindaily$Day <= 20)] <- 2
+raindaily$Dekad <- raindaily$Dekad + (3*(raindaily$Month-1))
+raindaily$YearDekad <- paste(raindaily$Year,sprintf("%02d",raindaily$Dekad),sep="-")
+raindaily$YearMonth <-  paste(raindaily$Year,sprintf("%02d",raindaily$Month),sep="-")
+
+raindaily$Pentad   <- 6
+raindaily$Pentad[raindaily$Day  <= 05] <- 1
+raindaily$Pentad[(raindaily$Day  > 05)&(raindaily$Day <= 10)] <- 2
+raindaily$Pentad[(raindaily$Day  > 10)&(raindaily$Day <= 15)] <- 3
+raindaily$Pentad[(raindaily$Day  > 15)&(raindaily$Day <= 20)] <- 4
+raindaily$Pentad[(raindaily$Day  > 20)&(raindaily$Day <= 25)] <- 5
+
+raindaily$Pentad <- raindaily$Pentad + (6*(raindaily$Month-1))
+raindaily$YearPentad <- paste(raindaily$Year,sprintf("%02d",raindaily$Pentad),sep="-")
+
+rainddekad <- raindaily %>% group_by(YearDekad)
+raindekad <- rainddekad %>% summarise(Year=mean(Year),dekad=mean(Dekad),lon=mean(lon),lat=mean(lat),chirpsdekad=sum(chirps),
+                                      tamsatdekad=sum(TAMSATFilled))
+
+rainpentad <- raindaily %>% group_by(YearPentad)
+rainpentad <- rainpentad %>% summarise(Year=mean(Year),pentad=mean(Pentad),lon=mean(lon),lat=mean(lat),chirpspentad=sum(chirps),
+                                       tamsatpentad=sum(TAMSATFilled))
+```
+
+```{r}
+plot(raindaily$chirps,raindaily$TAMSATFilled,xlim=c(1,100),ylim=c(1,100),
+   #  asp=1,
+     col=rgb(0,0,0,.5),pch=16,cex=.5)
+
+
+```
+
+```{r}
+plot(rainpentad$chirpspentad,rainpentad$tamsatpentad,xlim=c(1,150),ylim=c(1,150),
+   #  asp=1,
+     col=rgb(0,0,0,.5),pch=16,cex=.5)
+```
+
+```{r}
+plot(raindekad$chirpsdekad,raindekad$tamsatdekad,xlim=c(1,200),ylim=c(1,200),
+   #  asp=1,
+     col=rgb(0,0,0,.5),pch=16,cex=.5)
+```
+
+
+# Climatologies
+
+```{r}
+# Create pentadal climate statistics
+perdays <- function(x,threshold){ return( (length(which(x > threshold)))/(length(x)))}
+
+chirpspentadsplit <-  split(rainpentad$chirpspentad,rainpentad$pentad)
+tamsatpentadsplit <-  split(rainpentad$tamsatpentad,rainpentad$pentad)
+pentadclimate <- data.frame(pentad   =sapply(split(rainpentad$pentad,rainpentad$pentad),mean,na.rm=TRUE),
+                           chirpsmean    =sapply(chirpspentadsplit,mean,na.rm=TRUE),
+                           chirpssd      =sapply(chirpspentadsplit,sd,na.rm=TRUE),
+                           chirpsmedian  =sapply(chirpspentadsplit,median,na.rm=TRUE),
+                           chirpsQ90     =sapply(chirpspentadsplit,quantile,0.9,na.rm=TRUE),
+                           chirpsQ10     =sapply(chirpspentadsplit,quantile,0.1,na.rm=TRUE),
+                           chirpsperrain =sapply(chirpspentadsplit,perdays,0),
+                           chirpsperrain5=sapply(chirpspentadsplit,perdays,5),
+                           chirpsperrain20=sapply(chirpspentadsplit,perdays,20),
+                           
+                           tamsatmean    =sapply(tamsatpentadsplit,mean,na.rm=TRUE),
+                           tamsatsd      =sapply(tamsatpentadsplit,sd,na.rm=TRUE),
+                           tamsatmedian  =sapply(tamsatpentadsplit,median,na.rm=TRUE),
+                           tamsatQ90     =sapply(tamsatpentadsplit,quantile,0.9,na.rm=TRUE),
+                           tamsatQ10     =sapply(tamsatpentadsplit,quantile,0.1,na.rm=TRUE),
+                           tamsatperrain =sapply(tamsatpentadsplit,perdays,0),
+                           tamsatperrain5=sapply(tamsatpentadsplit,perdays,5),
+                           tamsatperrain20=sapply(tamsatpentadsplit,perdays,20)
+                           
+                           )
+
+```
+
+```{r}
+
+chirpsdekadsplit <-  split(raindekad$chirpsdekad,raindekad$dekad)
+tamsatdekadsplit <-  split(raindekad$tamsatdekad,raindekad$dekad)
+dekadclimate <- data.frame(dekad   =sapply(split(raindekad$dekad,raindekad$dekad),mean,na.rm=TRUE),
+                           chirpsmean    =sapply(chirpsdekadsplit,mean,na.rm=TRUE),
+                           chirpssd      =sapply(chirpsdekadsplit,sd,na.rm=TRUE),
+                           chirpsmedian  =sapply(chirpsdekadsplit,median,na.rm=TRUE),
+                           chirpsQ90     =sapply(chirpsdekadsplit,quantile,0.9,na.rm=TRUE),
+                           chirpsQ10     =sapply(chirpsdekadsplit,quantile,0.1,na.rm=TRUE),
+                           chirpsperrain =sapply(chirpsdekadsplit,perdays,0),
+                           chirpsperrain5=sapply(chirpsdekadsplit,perdays,5),
+                           chirpsperrain20=sapply(chirpsdekadsplit,perdays,20),
+                           
+                           tamsatmean    =sapply(tamsatdekadsplit,mean,na.rm=TRUE),
+                           tamsatsd      =sapply(tamsatdekadsplit,sd,na.rm=TRUE),
+                           tamsatmedian  =sapply(tamsatdekadsplit,median,na.rm=TRUE),
+                           tamsatQ90     =sapply(tamsatdekadsplit,quantile,0.9,na.rm=TRUE),
+                           tamsatQ10     =sapply(tamsatdekadsplit,quantile,0.1,na.rm=TRUE),
+                           tamsatperrain =sapply(tamsatdekadsplit,perdays,0),
+                           tamsatperrain5=sapply(tamsatdekadsplit,perdays,5),
+                           tamsatperrain20=sapply(tamsatdekadsplit,perdays,20)
+                           
+                           )
+
+```
+
+```{r}
+png("DekadTAMSATCHIRPS_clim_.png",width=5,height=7,units="in",res=200,pointsize=11)
+par(mfrow=c(2,1),mar=c(3,2.5,.5,1))
+
+plot(raindekad$chirpsdekad~raindekad$dekad,pch=16,cex=.6,col="dark grey",
+     axes=FALSE,cex.axis=.8,ylim=c(0,125),
+     xlab=list("Month of year",cex=.8),
+     ylab=list("CHIRPS Dekadal rainfall sum",cex=.8),
+     mgp=c(1.5,.35,0),tcl=-.25)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,36,by=3),labels=rep("",13),cex.axis=.8)
+axis(1,at=seq(1.25,36,by=3),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(dekadclimate$chirpsmean~dekadclimate$dekad,col="red",lwd=1)
+lines(dekadclimate$chirpsmedian~dekadclimate$dekad,col="blue",lwd=1)
+
+polygon(c(dekadclimate$dekad,rev(dekadclimate$dekad),dekadclimate$dekad[1]),
+        c(dekadclimate$chirpsQ10,rev(dekadclimate$chirpsQ90),dekadclimate$chirpsQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+
+
+plot(raindekad$tamsatdekad~raindekad$dekad,pch=16,cex=.6,col="dark grey",axes=FALSE,
+     xlab=list("Month of year",cex=.8),cex.axis=.8,ylim=c(0,125),
+     ylab=list("TAMSAT Dekadal rainfall sum",cex=.8), 
+     mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,36,by=3),labels=rep("",13))
+axis(1,at=seq(1.25,36,by=3),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(dekadclimate$tamsatmean~dekadclimate$dekad,col="red",lwd=1)
+lines(dekadclimate$tamsatmedian~dekadclimate$dekad,col="blue",lwd=1)
+
+polygon(c(dekadclimate$dekad,rev(dekadclimate$dekad),dekadclimate$dekad[1]),
+        c(dekadclimate$tamsatQ10,rev(dekadclimate$tamsatQ90),dekadclimate$tamsatQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+dev.off()
+```
+
+```{r}
+png("PentadTAMSATCHIRPS_clim_.png",width=5,height=7,units="in",res=200,pointsize=11)
+par(mfrow=c(2,1),mar=c(3,2.5,.5,1))
+
+plot(rainpentad$chirpspentad~rainpentad$pentad,pch=16,cex=.5,col="dark grey",
+     axes=FALSE,cex.axis=.8,ylim=c(0,100),
+     xlab=list("Month of year",cex=.8),
+     ylab=list("CHIRPS pentadal rainfall sum",cex=.8),
+     mgp=c(1.5,.35,0),tcl=-.25)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,72,by=6),labels=rep("",13),cex.axis=.8)
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$chirpsmean~pentadclimate$pentad,col="red",lwd=1)
+lines(pentadclimate$chirpsmedian~pentadclimate$pentad,col="blue",lwd=1)
+
+polygon(c(pentadclimate$pentad,rev(pentadclimate$pentad),pentadclimate$pentad[1]),
+        c(pentadclimate$chirpsQ10,rev(pentadclimate$chirpsQ90),pentadclimate$chirpsQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+
+
+plot(rainpentad$tamsatpentad~rainpentad$pentad,pch=16,cex=.5,col="dark grey",axes=FALSE,
+     xlab=list("Month of year",cex=.8),cex.axis=.8,ylim=c(0,100),
+     ylab=list("TAMSAT pentadal rainfall sum",cex=.8), 
+     mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,72,by=6),labels=rep("",13),cex.axis=.8)
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$tamsatmean~pentadclimate$pentad,col="red",lwd=1)
+lines(pentadclimate$tamsatmedian~pentadclimate$pentad,col="blue",lwd=1)
+
+polygon(c(pentadclimate$pentad,rev(pentadclimate$pentad),pentadclimate$pentad[1]),
+        c(pentadclimate$tamsatQ10,rev(pentadclimate$tamsatQ90),pentadclimate$tamsatQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+dev.off()
+```
+
+```{r}
+#png("DekadTAMSATCHIRPS_climdiff_.png",width=5,height=5,units="in",res=200,pointsize=11)
+
+plot((raindekad$chirpsdekad-raindekad$tamsatdekad)~raindekad$dekad,pch=16,cex=.6,col="dark grey",
+     axes=FALSE,cex.axis=.8,ylim=c(-100,100),
+     xlab=list("Month of year",cex=.8),
+     ylab=list("CHIRPS-TAMSAT Dekadal rainfall difference",cex=.8),
+     mgp=c(1.5,.35,0),tcl=-.25)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,36,by=3),labels=rep("",13),cex.axis=.8)
+axis(1,at=seq(1.25,36,by=3),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(dekadclimate$chirpsmean-dekadclimate$tamsatmean    ~dekadclimate$dekad,col="red",lwd=1)
+lines(dekadclimate$chirpsmedian-dekadclimate$tamsatmedian~dekadclimate$dekad,col="blue",lwd=1)
+
+#polygon(c(dekadclimate$dekad,rev(dekadclimate$dekad),dekadclimate$dekad[1]),
+#        c((dekadclimate$chirpsQ10-dekadclimate$chirpsQ10),rev(dekadclimate$chirpsQ90),dekadclimate$chirpsQ10[1]),col=rgb(0,0,0,.1),border=#NA)
+   
+box()
+```
+
+```{r}
+#png("pentadTAMSATCHIRPS_climdiff_.png",width=5,height=5,units="in",res=200,pointsize=11)
+
+plot((rainpentad$chirpspentad-rainpentad$tamsatpentad)~rainpentad$pentad,pch=16,cex=.6,col="dark grey",
+     axes=FALSE,cex.axis=.8,ylim=c(-80,80),
+     xlab=list("Month of year",cex=.8),
+     ylab=list("CHIRPS-TAMSAT pentadal rainfall difference",cex=.8),
+     mgp=c(1.5,.35,0),tcl=-.25)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,72,by=6),labels=rep("",13),cex.axis=.8)
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$chirpsmean-pentadclimate$tamsatmean    ~pentadclimate$pentad,col="red",lwd=1)
+lines(pentadclimate$chirpsmedian-pentadclimate$tamsatmedian~pentadclimate$pentad,col="blue",lwd=1)
+
+box()
+```
+
+
+```{r}
+test <- data.frame(model=c(3,4,5,0,0,1),obs=c(3,6,0,2,4,1))
+
+mean((test$obs - test$model)) 
+
+
+test <- data.frame(model=c(3,4,5,0,0,1),obs=c(3,6,0,2,4,1))
+
+mean(test$obs)- mean(test$model)
+
+
+
+```
+
+
+
+
+
+
+```{r}
+
+png("PentadTAMSATCHIRPS_raindaysclim_.png",width=5,height=7,units="in",res=200,pointsize=10)
+par(mfrow=c(2,1),mar=c(3,3,2.5,1))
+
+plot(pentadclimate$chirpsperrain*100~pentadclimate$pentad,pch=16,cex=.6,
+     col="black",type="l",mgp=c(1.75,.35,0),ylim=c(0,100),
+     axes=FALSE,xlab="Month of year",ylab="% years recording rain",
+     main=list(paste("CHIRPS Climataological percentage of rainy pentads (",min(raindaily$Year),":",max(raindaily$Year),")",sep=""),cex=.9))
+axis(2,mgp=c(1.75,.35,0),tcl=-.25)
+axis(1,at=seq(0,72,by=6),labels=rep("",13))
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$chirpsperrain*100~pentadclimate$pentad,col="black",lwd=1)
+lines(pentadclimate$chirpsperrain5*100~pentadclimate$pentad,col="red",lwd=1)
+lines(pentadclimate$chirpsperrain20*100~pentadclimate$pentad,col="blue",lwd=1)
+
+legend("topright",lwd=c(1,1,1),col=c("black","red","blue"),
+       legend=c("Any rain","> 5mm per pentad",">20mm per pentad"),cex=.6)
+
+box()
+
+plot(pentadclimate$tamsatperrain*100~pentadclimate$pentad,pch=16,cex=.6,
+     col="black",type="l",mgp=c(1.75,.35,0),ylim=c(0,100),
+     axes=FALSE,xlab="Month of year",ylab="% years recording rain",
+     main=list(paste("TAMSAT Climataological percentage of rainy pentads (",min(raindaily$Year),":",max(raindaily$Year),")",sep=""),cex=.9))
+axis(2,mgp=c(1.75,.35,0),tcl=-.25)
+axis(1,at=seq(0,72,by=6),labels=rep("",13))
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$tamsatperrain*100~pentadclimate$pentad,col="black",lwd=1)
+lines(pentadclimate$tamsatperrain5*100~pentadclimate$pentad,col="red",lwd=1)
+lines(pentadclimate$tamsatperrain20*100~pentadclimate$pentad,col="blue",lwd=1)
+
+legend("topright",lwd=c(1,1,1),col=c("black","red","blue"),
+       legend=c("Any rain","> 5mm per pentad",">20mm per pentad"),cex=.6)
+
+box()
+dev.off()
+```
+
+# Heat map
+```{r}
+chirpspentadshort <- rainpentad[,c("Year","pentad","chirpspentad")]
+chirpsgushort <- chirpspentadshort[which(chirpspentadshort$pentad %in% 7:38),c("Year","pentad","chirpspentad")]
+chirpsdehrshort <- chirpspentadshort[which(chirpspentadshort$pentad %in% 39:72),c("Year","pentad","chirpspentad")]
+
+chirpsgumatrix <- as.data.frame(pivot_wider(chirpsgushort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpsgumatrix) <- chirpsgumatrix$Year
+chirpsgumatrix <- chirpsgumatrix[,-1]
+
+chirpsdehrmatrix <- as.data.frame(pivot_wider(chirpsdehrshort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpsdehrmatrix) <- chirpsdehrmatrix$Year
+chirpsdehrmatrix <- chirpsdehrmatrix[,-1]
+
+chirpspentadmatrix <- as.data.frame(pivot_wider(chirpspentadshort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpspentadmatrix) <- chirpspentadmatrix$Year
+chirpspentadmatrix <- chirpspentadmatrix[,-1]
+
+```
+
+```{r}
+tamsatpentadshort <- rainpentad[,c("Year","pentad","tamsatpentad")]
+tamsatgushort <- tamsatpentadshort[which(tamsatpentadshort$pentad %in% 7:38),c("Year","pentad","tamsatpentad")]
+tamsatdehrshort <- tamsatpentadshort[which(tamsatpentadshort$pentad %in% 39:72),c("Year","pentad","tamsatpentad")]
+
+tamsatgumatrix <- as.data.frame(pivot_wider(tamsatgushort,names_from = pentad, values_from = tamsatpentad))
+row.names(tamsatgumatrix) <- tamsatgumatrix$Year
+tamsatgumatrix <- tamsatgumatrix[,-1]
+
+tamsatdehrmatrix <- as.data.frame(pivot_wider(tamsatdehrshort,names_from = pentad, values_from = tamsatpentad))
+row.names(tamsatdehrmatrix) <- tamsatdehrmatrix$Year
+tamsatdehrmatrix <- tamsatdehrmatrix[,-1]
+
+tamsatpentadmatrix <- as.data.frame(pivot_wider(tamsatpentadshort,names_from = pentad, values_from = tamsatpentad))
+row.names(tamsatpentadmatrix) <- tamsatpentadmatrix$Year
+tamsatpentadmatrix <- tamsatpentadmatrix[,-1]
+
+```
+
+
+```{r}
+p1<- ggplot(chirpspentadshort, aes(pentad, Year, fill= chirpspentad)) + 
+  geom_tile() + 
+  scale_fill_distiller(palette = "YlGnBu",
+                       direction=1,
+                       values=c(0.01,0.08,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,1)) 
+p1<- p1+  geom_vline(xintercept=seq(6,66,by=6),size=.25)
+ 
+   
+
+```
+
+```{r}
+p2<- ggplot(tamsatpentadshort, aes(pentad, Year, fill= tamsatpentad)) + 
+  geom_tile() + 
+  scale_fill_distiller(palette = "YlGnBu",
+                       direction=1,
+                       values=c(0.01,0.08,0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,1)) 
+p2<- p2 +  geom_vline(xintercept=seq(6,66,by=6),size=.25)
+
+
+```
+
+```{r}
+png("PentadTAMSATCHIRPS_season.png",width=7,height=7,units="in",res=250,pointsize=10)
+
+grid.arrange(p1, p2, nrow = 2) 
+dev.off()
+
+```
+
+```{r}
+
+differencepentad <- tamsatpentadshort
+names(differencepentad)[3] <- "difference"
+differencepentad$difference <- chirpspentadshort$chirpspentad - tamsatpentadshort$tamsatpentad
+differencepentad$difference[differencepentad$difference > 20] <- 20
+differencepentad$difference[differencepentad$difference < -20] <- -20
+
+p3<- ggplot(differencepentad, aes(pentad, Year, fill= difference)) + 
+  geom_tile() + 
+  scale_fill_distiller(palette = "BrBG",
+                       direction=1) 
+p3 +  geom_vline(xintercept=seq(6,66,by=6),size=.25)
+
+
+```
+
+
+```{r}
+ggplot(chirpsgushort, aes(pentad, Year, fill= chirpspentad)) + 
+  geom_tile() + scale_fill_viridis() +
+  theme_ipsum()
+
+```
+
+
+
+```{r}
+heatmaply(chirpsgumatrix,grid_gap = 1)
+```
+
+
+
+# Basic start date
+
+```{r}
+
+years <- sort(unique(rainpentad$Year))
+
+for(y in 1:length(years){
+   tmp <- rainpentad[rainpentad$Year %in% years[y],]
+   startgu0  <- min(which(tmp$chirpspentad[12:36]>0))  
+   startgu5  <- min(which(tmp$chirpspentad[12:36]>5))  
+   startgu20 <- min(which(tmp$chirpspentad[12:36]>20))  
+   
+   startgu0  <- min(which(tmp$chirpspentad[47:36]>0))  
+   startgu5  <- min(which(tmp$chirpspentad[47:36]>5))  
+   startgu20 <- min(which(tmp$chirpspentad[47:36]>20))  
+}
+
+```
+
+
+
+
+```{r}
+Chirpsdensity <- raster(file.choose())
+plot(Chirpsdensity,xlim=c(42,43),ylim=c(3,4))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r}
+rain$doy    <- format.Date(rain$date,"%m-%d")
+climatology <- group_by(rain,doy)
+climatology <- summarise(climatology, 
+                         mean   = mean(chirps), 
+                         median = median(chirps), 
+                         Q90 = quantile(chirps,0.9), 
+                         Q10 = quantile(chirps,0.1), 
+                         n = n())
+
+climatology$doy <- as.Date(paste("2002-",climatology$doy,sep=""))
+```
+
+```{r}
+dailyamounts <- split(rain$chirps,rain$doy)
+dailyamounts[90:120]
+```
+
+
+
+
+
+
+```{r}
+plot(climatology$mean ~ climatology$doy, type="l",lwd=2)
+plot(climatology$Q10 ~ climatology$doy, type="l",lwd=2)
+
+```
+
+

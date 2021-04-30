@@ -1,0 +1,12 @@
+"0","```r
+rain$doy    <- format.Date(rain$date,\"%m-%d\")
+climatology <- group_by(rain,doy)
+climatology <- summarise(climatology, 
+                         mean   = mean(chirps), 
+                         median = median(chirps), 
+                         Q90 = quantile(chirps,0.9), 
+                         Q10 = quantile(chirps,0.1), 
+                         n = n())
+
+climatology$doy <- as.Date(paste(\"2002-\",climatology$doy,sep=\"\"))
+```"

@@ -1,0 +1,16 @@
+"0","```r
+
+differencepentad <- tamsatpentadshort
+names(differencepentad)[3] <- \"difference\"
+differencepentad$difference <- chirpspentadshort$chirpspentad - tamsatpentadshort$tamsatpentad
+differencepentad$difference[differencepentad$difference > 20] <- 20
+differencepentad$difference[differencepentad$difference < -20] <- -20
+
+p3<- ggplot(differencepentad, aes(pentad, Year, fill= difference)) + 
+  geom_tile() + 
+  scale_fill_distiller(palette = \"BrBG\",
+                       direction=1) 
+p3 +  geom_vline(xintercept=seq(6,66,by=6),size=.25)
+
+
+```"

@@ -1,0 +1,26 @@
+"0","```r
+
+chirpsdekadsplit <-  split(raindekad$chirpsdekad,raindekad$dekad)
+tamsatdekadsplit <-  split(raindekad$tamsatdekad,raindekad$dekad)
+dekadclimate <- data.frame(dekad   =sapply(split(raindekad$dekad,raindekad$dekad),mean,na.rm=TRUE),
+                           chirpsmean    =sapply(chirpsdekadsplit,mean,na.rm=TRUE),
+                           chirpssd      =sapply(chirpsdekadsplit,sd,na.rm=TRUE),
+                           chirpsmedian  =sapply(chirpsdekadsplit,median,na.rm=TRUE),
+                           chirpsQ90     =sapply(chirpsdekadsplit,quantile,0.9,na.rm=TRUE),
+                           chirpsQ10     =sapply(chirpsdekadsplit,quantile,0.1,na.rm=TRUE),
+                           chirpsperrain =sapply(chirpsdekadsplit,perdays,0),
+                           chirpsperrain5=sapply(chirpsdekadsplit,perdays,5),
+                           chirpsperrain20=sapply(chirpsdekadsplit,perdays,20),
+                           
+                           tamsatmean    =sapply(tamsatdekadsplit,mean,na.rm=TRUE),
+                           tamsatsd      =sapply(tamsatdekadsplit,sd,na.rm=TRUE),
+                           tamsatmedian  =sapply(tamsatdekadsplit,median,na.rm=TRUE),
+                           tamsatQ90     =sapply(tamsatdekadsplit,quantile,0.9,na.rm=TRUE),
+                           tamsatQ10     =sapply(tamsatdekadsplit,quantile,0.1,na.rm=TRUE),
+                           tamsatperrain =sapply(tamsatdekadsplit,perdays,0),
+                           tamsatperrain5=sapply(tamsatdekadsplit,perdays,5),
+                           tamsatperrain20=sapply(tamsatdekadsplit,perdays,20)
+                           
+                           )
+
+```"

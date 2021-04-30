@@ -1,0 +1,28 @@
+"0","```r
+# Create pentadal climate statistics
+perdays <- function(x,threshold){ return( (length(which(x > threshold)))/(length(x)))}
+
+chirpspentadsplit <-  split(rainpentad$chirpspentad,rainpentad$pentad)
+tamsatpentadsplit <-  split(rainpentad$tamsatpentad,rainpentad$pentad)
+pentadclimate <- data.frame(pentad   =sapply(split(rainpentad$pentad,rainpentad$pentad),mean,na.rm=TRUE),
+                           chirpsmean    =sapply(chirpspentadsplit,mean,na.rm=TRUE),
+                           chirpssd      =sapply(chirpspentadsplit,sd,na.rm=TRUE),
+                           chirpsmedian  =sapply(chirpspentadsplit,median,na.rm=TRUE),
+                           chirpsQ90     =sapply(chirpspentadsplit,quantile,0.9,na.rm=TRUE),
+                           chirpsQ10     =sapply(chirpspentadsplit,quantile,0.1,na.rm=TRUE),
+                           chirpsperrain =sapply(chirpspentadsplit,perdays,0),
+                           chirpsperrain5=sapply(chirpspentadsplit,perdays,5),
+                           chirpsperrain20=sapply(chirpspentadsplit,perdays,20),
+                           
+                           tamsatmean    =sapply(tamsatpentadsplit,mean,na.rm=TRUE),
+                           tamsatsd      =sapply(tamsatpentadsplit,sd,na.rm=TRUE),
+                           tamsatmedian  =sapply(tamsatpentadsplit,median,na.rm=TRUE),
+                           tamsatQ90     =sapply(tamsatpentadsplit,quantile,0.9,na.rm=TRUE),
+                           tamsatQ10     =sapply(tamsatpentadsplit,quantile,0.1,na.rm=TRUE),
+                           tamsatperrain =sapply(tamsatpentadsplit,perdays,0),
+                           tamsatperrain5=sapply(tamsatpentadsplit,perdays,5),
+                           tamsatperrain20=sapply(tamsatpentadsplit,perdays,20)
+                           
+                           )
+
+```"

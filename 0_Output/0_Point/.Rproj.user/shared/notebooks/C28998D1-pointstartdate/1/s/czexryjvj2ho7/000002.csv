@@ -1,0 +1,37 @@
+"0","```r
+png(\"PentadTAMSATCHIRPS_clim_.png\",width=5,height=7,units=\"in\",res=200,pointsize=11)
+par(mfrow=c(2,1),mar=c(3,2.5,.5,1))
+
+plot(rainpentad$chirpspentad~rainpentad$pentad,pch=16,cex=.5,col=\"dark grey\",
+     axes=FALSE,cex.axis=.8,ylim=c(0,100),
+     xlab=list(\"Month of year\",cex=.8),
+     ylab=list(\"CHIRPS pentadal rainfall sum\",cex=.8),
+     mgp=c(1.5,.35,0),tcl=-.25)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,72,by=6),labels=rep(\"\",13),cex.axis=.8)
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$chirpsmean~pentadclimate$pentad,col=\"red\",lwd=1)
+lines(pentadclimate$chirpsmedian~pentadclimate$pentad,col=\"blue\",lwd=1)
+
+polygon(c(pentadclimate$pentad,rev(pentadclimate$pentad),pentadclimate$pentad[1]),
+        c(pentadclimate$chirpsQ10,rev(pentadclimate$chirpsQ90),pentadclimate$chirpsQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+
+
+plot(rainpentad$tamsatpentad~rainpentad$pentad,pch=16,cex=.5,col=\"dark grey\",axes=FALSE,
+     xlab=list(\"Month of year\",cex=.8),cex.axis=.8,ylim=c(0,100),
+     ylab=list(\"TAMSAT pentadal rainfall sum\",cex=.8), 
+     mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(2,mgp=c(1.5,.35,0),tcl=-.25,cex.axis=.8)
+axis(1,at=seq(0,72,by=6),labels=rep(\"\",13),cex.axis=.8)
+axis(1,at=seq(3,72,by=6),tcl=0,labels=month.abb,cex.axis=.8,mgp=c(0,0,0))
+lines(pentadclimate$tamsatmean~pentadclimate$pentad,col=\"red\",lwd=1)
+lines(pentadclimate$tamsatmedian~pentadclimate$pentad,col=\"blue\",lwd=1)
+
+polygon(c(pentadclimate$pentad,rev(pentadclimate$pentad),pentadclimate$pentad[1]),
+        c(pentadclimate$tamsatQ10,rev(pentadclimate$tamsatQ90),pentadclimate$tamsatQ10[1]),col=rgb(0,0,0,.1),border=NA)
+   
+box()
+dev.off()
+```"

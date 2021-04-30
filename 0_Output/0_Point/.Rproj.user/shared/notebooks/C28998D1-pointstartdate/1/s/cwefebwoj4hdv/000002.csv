@@ -1,0 +1,18 @@
+"0","```r
+chirpspentadshort <- rainpentad[,c(\"Year\",\"pentad\",\"chirpspentad\")]
+chirpsgushort <- chirpspentadshort[which(chirpspentadshort$pentad %in% 7:38),c(\"Year\",\"pentad\",\"chirpspentad\")]
+chirpsdehrshort <- chirpspentadshort[which(chirpspentadshort$pentad %in% 39:72),c(\"Year\",\"pentad\",\"chirpspentad\")]
+
+chirpsgumatrix <- as.data.frame(pivot_wider(chirpsgushort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpsgumatrix) <- chirpsgumatrix$Year
+chirpsgumatrix <- chirpsgumatrix[,-1]
+
+chirpsdehrmatrix <- as.data.frame(pivot_wider(chirpsdehrshort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpsdehrmatrix) <- chirpsdehrmatrix$Year
+chirpsdehrmatrix <- chirpsdehrmatrix[,-1]
+
+chirpspentadmatrix <- as.data.frame(pivot_wider(chirpspentadshort,names_from = pentad, values_from = chirpspentad))
+row.names(chirpspentadmatrix) <- chirpspentadmatrix$Year
+chirpspentadmatrix <- chirpspentadmatrix[,-1]
+
+```"

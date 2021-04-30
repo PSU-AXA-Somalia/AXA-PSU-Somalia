@@ -1,0 +1,10 @@
+"0","```r
+# For a point
+lonlat <- data.frame(lon = c(42.2362),lat=c(3.5039))
+dates <- c(\"1983-01-01\", \"2021-03-01\")
+#dt <- get_chirps(lonlat, dates)
+#chirps <- dt
+#chirps$date <- as.Date(chirps$date)
+#chirps <- chirps[-1]
+#raindaily <- get_chirps(lonlat, dates)
+```"

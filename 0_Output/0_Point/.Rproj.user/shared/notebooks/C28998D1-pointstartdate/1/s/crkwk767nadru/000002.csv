@@ -1,0 +1,13 @@
+"0","```r
+test <- data.frame(model=c(3,4,5,0,0,1),obs=c(3,6,0,2,4,1))
+
+mean((test$obs - test$model)) 
+
+
+test <- data.frame(model=c(3,4,5,0,0,1),obs=c(3,6,0,2,4,1))
+
+mean(test$obs)- mean(test$model)
+
+
+
+```"
