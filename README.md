@@ -1,2 +1,2 @@
-# Season-Dates
-Code that creates analysis for season start &amp; end dates, along with length of season and length of dry season
+# Code Repository
+Note this is a work in progress that is likely to change rapidly.  
