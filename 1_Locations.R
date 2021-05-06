@@ -35,12 +35,12 @@ dir_Output          <- paste(dir_0main,"..","AXA-PSU-Output",sep=computer_sep)
 # Other satellite data
 #--------------------------------------------------------
  InternalSat <- data.frame(Name="TAMSAT_SM",
-                           Location="/Volumes/Mac storage space/All_Data/2_Remote_Sensing/1_QC_data_daily/TAMSAT_SM_Full/SM_Layer_mean",
-                           PreAddress="smcl.mean.tamsat_nceo_da_wb_v1p0p1_",
+                           Location="/Volumes/Mac storage space/All_Data/2_Remote_Sensing/1_QC_data_daily/SM_TAMSAT_Full/MeanColumnSoilMoisture",
+                           PreAddress="SM_tamsat_nceo_da_wb_v1p0p1_",
                            DateFormat="%Y%m%d",
                            PostAddress=".tif")
 
- 
+ InternalSat
 #--------------------------------------------------------
 # Output file tree creator 
 #--------------------------------------------------------
