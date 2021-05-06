@@ -62,12 +62,18 @@ dir_Output_data <- paste(dir_Runset,"0_Data",sep=computer_sep)
        #----------------------------------------
        # Create an IRI data library URL
        #----------------------------------------
+       
+       
        prexyaddress<- satellites$Web[s]
        timestuff <- paste("T/%28", format.Date(startdate,"%d"),"%20",format.Date(startdate,"%b"),"%20",format.Date(startdate,"%Y"),
                           "%29%28",format.Date(enddate,"%d"),"%20",  format.Date(enddate,"%b"),  "%20",format.Date(enddate,"%Y"),"%29RANGEEDGES",sep="")
+       timestuffmini <-  paste("T/%28", format.Date(startdate,"%d"),"%20",format.Date(startdate,"%b"),"%20",format.Date(startdate,"%Y"),
+                                 "%29%28",format.Date(startdate+2,"%d"),"%20",  format.Date(startdate+2,"%b"),  "%20",format.Date(startdate+2,"%Y"),"%29RANGEEDGES",sep="")
+       
        xystuff<-paste("Y/%28",Y,"%29VALUES/X/%28",X,"%29VALUES",sep="")
        postxyaddress<-"CopyStream/T+exch+table-+text+text+skipanyNaN+-table+.csv"
        
+       primeaddress<-paste(prexyaddress,timestuffmini,xystuff,postxyaddress,sep=computer_sep)
        address<-paste(prexyaddress,timestuff,xystuff,postxyaddress,sep=computer_sep)
        
        
@@ -75,7 +81,12 @@ dir_Output_data <- paste(dir_Runset,"0_Data",sep=computer_sep)
        # Download
        #----------------------------------------
        file.name <- paste("tmp.csv",sep="")
-       download.file(address,file.name,quiet=FALSE,method="wget")
+       system.time(download.file(primeaddress,file.name,quiet=FALSE,method="auto"))
+       file.remove("tmp.csv")
+       options(timeout=360)
+       system.time(download.file(address,file.name,quiet=FALSE,method="auto",timeout=120))
+       options(timeout=60)
+       
        
        #----------------------------------------
        # Read in and add to the final data frame. You could make this a list, add columns, whatever

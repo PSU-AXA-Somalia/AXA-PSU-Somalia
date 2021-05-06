@@ -21,7 +21,7 @@ rm(list=ls())
 #================================================================================
 # SETUP-CODE - DO NOT EDIT BELOW THIS POINT 
 #================================================================================
- # Load the file/folder locations
+ # Load the file/foldåer locations
  #--------------------------------------------------------------------------------
   source("1_Libraries.r")
   source("1_Locations.r")
@@ -38,7 +38,7 @@ rm(list=ls())
  #--------------------------------------------------------------------------------
  # Create a runset output folder
  #--------------------------------------------------------------------------------
-  dir_Runset <- RunsetDirectory(dir_Output,runset=runset,type="1_Point",create=FALSE)
+  dir_Runset <- RunsetDirectory(dir_Output,runset=runset,type="1_Point",create=TRUE)
  
  #--------------------------------------------------------------------------------
  # Make spatial  versions of the location files
