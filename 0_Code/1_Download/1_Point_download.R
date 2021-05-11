@@ -30,7 +30,7 @@ dir_Output_data <- paste(dir_Runset,"0_Data",sep=computer_sep)
  
  # UCSB CHIRPS, 1981-present, Global tropics  
  satellites <- rbind(satellites, c("CHIRPS",
-                                   "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.daily-improved/.global/.0p25/.prcp",
+                                   "https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.daily-improved/.global/.0p05/.prcp",
                                    "%d %b %Y"))
  
  # NASA TRMM 3B42 - 1998-2014  on board radar, IR, PM.., Global tropics  
