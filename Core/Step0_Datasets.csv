@@ -1,0 +1,7 @@
+﻿Family,Dataset,Version,Modified,ConvertScript
+rain,ARC2,1,,2_Extract_rain_ARC2_1.R
+rain,RFE2,1,,2_Extract_rain_RFE2_1.R
+rain,CHIRPS,2,,2_Extract_rain_CHIRPS_2_Raw.R
+rain,CHIRPS,2,Cropped,2_Extract_rain_CHIRPS_2_Cropped.R
+rain,TAMSAT,3.1,,2_Extract_rain_TAMSAT_31_Raw.R
+sm,TAMSAT,1,,2_Extract_sm_TAMSAT_1.R
