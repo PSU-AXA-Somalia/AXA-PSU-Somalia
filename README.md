@@ -1,6 +1,10 @@
-# Remote sensing core dashboards
+# Meteorological remote sensing standardised repository
 
-This code allows a user to create standardised subsets of a range of meteorological data:
+## What is it
+
+This code allows a user to create a standardised database of a range of meteorological data.  It is specifically for Dr Helen Greatrex and her work/partners.  For general users, you might find the IRI Data library more user friendly - https://iridl.ldeo.columbia.edu/
+
+## For what data?
 
 1. Currently here on github:
    a) NOAA-ARC 2.0
@@ -11,15 +15,14 @@ This code allows a user to create standardised subsets of a range of meteorologi
    b) TAMSAT v3
    c) TAMSAT Soil moisture
    d) CCI Soil moisture
-
+   
 ## What does it do?
 
 First, the code first creates a repository of all the data on your own computer in a standardised way.  
-**WARNING - RUNNING OUTSIDE THE SAMPLE DATA HERE WILL TAKE SEVERAL Gb SPACE - CONSIDER RUNNING ON A HARD-DRIVE**
 
  1. Automatically downloads data from source (code exists, working out Github) - Sample data is preloaded into this repository
- 2. Standardises the data to a daily geoTif with predefined filenames, projections (to come standardises the grid)
- 3. Temporally sums to a Pentadal (~5 days), Dekadal (~10 days) and monthly
+ 2. Standardises the data to a daily geoTif with predefined filenames and a custom projections (FUTURE FEATURE: standardized grids)
+ 3. Temporally sums the data to a Pentadal (~5 days), Dekadal (~10 days) and Monthly timesteps, where you control missing data
 
 Second, the code 
  
@@ -27,6 +30,8 @@ Second, the code
 
      +   
  3. Standardise, temporally sum and subset
+
+**WARNING - RUNNING OUTSIDE THE SAMPLE DATA HERE WILL TAKE SEVERAL Gb SPACE - CONSIDER RUNNING ON A HARD-DRIVE**
 
 
 To run, this needs AT LEAST
