@@ -3,7 +3,7 @@
 # GLOBAL PARAMETERS
 # If you update this file, please change the date
 #================================================================================================================
-globalparams_lastupdated <- as.Date("2021-10-31")
+globalparams_lastupdated <- as.Date("2021-11-05")
 #runsetparamdate_DONOTDELETE
 
 
@@ -11,7 +11,7 @@ globalparams_lastupdated <- as.Date("2021-10-31")
 # 1. GENERAL
 #================================================================================================================
    #---------------------------------------------------------------------------------
-   # Just stops spatial update errors from R.
+   # Just stops spatial update errors from R. IGNORE
    #---------------------------------------------------------------------------------
     options("rgdal_show_exportToProj4_warnings"="none")
 
@@ -45,10 +45,15 @@ globalparams_lastupdated <- as.Date("2021-10-31")
 #
 #    remotes::install_github('hgreatrex/Greatrex.Functions',force=TRUE)
 #================================================================================================================
-if(verbose){message("Step 0: Loading Global Parameters")}
-if(verbose){message("        Loading libraries and packages")}
+
+  if(verbose){message("Step 0: Loading Global Parameters")}
+  if(verbose){message("        Loading libraries and packages")}
+  suppressPackageStartupMessages(library(Greatrex.Functions))
+     
+  suppressPackageStartupMessages(library(tidyverse))
   suppressPackageStartupMessages(library(sp))
   suppressPackageStartupMessages(library(sf))
+  suppressPackageStartupMessages(library(raster))
   suppressPackageStartupMessages(library(ncdf4))
   suppressPackageStartupMessages(library(exactextractr))
   suppressPackageStartupMessages(library(tmap))
@@ -69,13 +74,14 @@ if(verbose){message("        Loading libraries and packages")}
  #================================================================================================================
    #---------------------------------------------------------------------------------
    # Are you running on a supercomputer/HPC platform? TRUE
-   # Or on a single desktop/lapop  FALSE
+   # Or on a single desktop/laptop  FALSE
    #---------------------------------------------------------------------------------
     SuperComputer <- FALSE
    
    #---------------------------------------------------------------------------------
    # Set up initial parameters including the main directory location
    # DO NOT PUT A TRAILING / or \\ AT THE END OR IT WON'T WORK
+   # Visibility of this to be improved
    #---------------------------------------------------------------------------------
     if(SuperComputer){
          suppressPackageStartupMessages(library(doMPI))
@@ -83,7 +89,7 @@ if(verbose){message("        Loading libraries and packages")}
          cl <- startMPIcluster()
          registerDoMPI(cl)
     }else{
-         dir_main        <- "/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Desktop/AXA-PSU-Somalia"
+         dir_main        <- "/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Documents/GitHub/Somalia/AXA-PSU-Somalia"
          ncores <- detectCores(logical = FALSE)
          registerDoParallel(cores=(ncores-2))
     }
