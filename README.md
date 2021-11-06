@@ -6,7 +6,7 @@ This code allows a user to create a standardised database of a range of satellit
 
 For general users (for now), you might find the IRI Data library more user friendly - https://iridl.ldeo.columbia.edu/
 
-To read instructions, see data requirements and check out some worked examples - click the Wiki tab above
+To read instructions, see data requirements and check out some worked examples - see the wiki: 
 https://github.com/PSU-AXA-Somalia/AXA-PSU-Somalia/wiki
 
 
