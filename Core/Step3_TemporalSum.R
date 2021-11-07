@@ -43,12 +43,14 @@
   # If you want to edit the datasets being updated, you can change Daily_datasetlist (not recommended)
   #------------------------------------------------------------------------------------------
    Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)[-grep("Icon", list.files(dir_data_remote_BGeoTif_daily))]
-        
+   Daily_datasetlist  <-  Daily_datasetlist[-grep(".md", Daily_datasetlist)]
+
   #------------------------------------------------------------------------------------------
   # Run the scripts
   #------------------------------------------------------------------------------------------
    for(n_data in seq_along(Daily_datasetlist)){
       dataset <- Daily_datasetlist[n_data]   
+      
       if(verbose %in% c(TRUE,"Limited")){message(paste("\n Dataset: ",dataset))}
       
       pentadcreated <- makepentadal(dataset,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite)

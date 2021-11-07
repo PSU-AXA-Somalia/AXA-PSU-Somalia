@@ -9,6 +9,11 @@
  products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_")
  products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_")
 
+ if("pentad_README" %in% products_pentad) { 
+   products_pentad <- products_pentad[-which(products_daily %in% "pentad_README")]
+ }
+ 
+ 
 #---------------------------------------------------------------------------------
 # Create Runset folder name
 #---------------------------------------------------------------------------------
