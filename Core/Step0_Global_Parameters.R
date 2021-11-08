@@ -5,6 +5,7 @@
 # (It should say Core - main - RStudio at the top), if not close R-Studio and open properly!
 #
 # If you update this file, please change the date
+# If you are brand new to R/R-Studio, read this first: https://psu-spatial.github.io/Geog364-2021/pg_Tut1_about.html 
 #================================================================================================================
 globalparams_lastupdated <- as.Date("2021-11-07")
 #runsetparamdate_DONOTDELETE
@@ -32,7 +33,11 @@ globalparams_lastupdated <- as.Date("2021-11-07")
 
     #---------------------------------------------------------------------------------
     # Directory separator:  
-    # Change to "\\" on Windows and "/" on a mac or linux
+    # Type 
+    #  getwd() 
+    # into your console (including the empty parentheses) and press enter.
+    # This will show you your current directory
+    # Is the separator symbol between subdirectories "/" or "\\" ?  
     #---------------------------------------------------------------------------------
     sep <- "/"     
 
