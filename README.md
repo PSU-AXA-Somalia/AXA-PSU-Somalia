@@ -9,4 +9,4 @@ For general users (for now), you might find the IRI Data library more user frien
 To read instructions, see data requirements and check out some worked examples - see the wiki: 
 https://github.com/PSU-AXA-Somalia/AXA-PSU-Somalia/wiki
 
-
+Note, this packages contains two years of test data (one year for ARC2 and one for RFE2).  The final release will include code to download the full archive of many more projects
