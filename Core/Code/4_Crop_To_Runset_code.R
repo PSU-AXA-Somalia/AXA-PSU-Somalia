@@ -74,7 +74,8 @@ LocalParams <- readLines("Step0_Global_Parameters.R")
    
  # Switch core to runset name
   LocalParams[min(grep("dir_core",LocalParams))] <- paste("   dir_core        <- paste(dir_main, \"Runset\", \"", Runset,"\", sep=sep)" ,sep="")
-
+  LocalParams[min(grep("dir_main",LocalParams))] <- paste("   dir_main        <- \"", dir_main,"\"" ,sep="")
+  
  # Makr runset output folders
   LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
   LocalParams[LocalParmsLine1] <- paste("   dir_analysis_raw <- paste(dir_core, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
@@ -609,6 +610,12 @@ if(movedata){
 projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
 newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
 tmp  <- file.copy(from=paste(dir_core,projfile,sep=sep),to=paste(dir_runset,newprojfile,sep=sep))  
+
+#------------------------------------------------------------------------------ 
+# and move code as needed
+#------------------------------------------------------------------------------ 
+file.copy(from=paste(dir_core,"Step0_Global_SetUp.R",sep=sep),
+          from=paste(dir_runset,"Step0_Global_SetUp.R",sep=sep))
 
 #------------------------------------------------------------------------------ 
 # Open on request

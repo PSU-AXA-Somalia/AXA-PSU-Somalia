@@ -42,11 +42,10 @@
   # Find out which daily datasets there are
   # If you want to edit the datasets being updated, you can change Daily_datasetlist (not recommended)
   #------------------------------------------------------------------------------------------
-   Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)[-grep("Icon", list.files(dir_data_remote_BGeoTif_daily))]
-   Daily_datasetlist  <-  Daily_datasetlist[-grep(".md", Daily_datasetlist)]
+   Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)
 
   #------------------------------------------------------------------------------------------
-  # Run the scripts
+  # Run the scripts, highlight everything and press Run-All (or command/ctrl Enter)
   #------------------------------------------------------------------------------------------
    for(n_data in seq_along(Daily_datasetlist)){
       dataset <- Daily_datasetlist[n_data]   
@@ -54,8 +53,8 @@
       if(verbose %in% c(TRUE,"Limited")){message(paste("\n Dataset: ",dataset))}
       
       pentadcreated <- makepentadal(dataset,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite)
-      dekadcreated <- makedekadal(dataset,missinglimitdekad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite)
-      monthcreated <- makemonthly(dataset,missinglimitmonth,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite)
+      dekadcreated  <- makedekadal(dataset,missinglimitdekad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite)
+      monthcreated  <- makemonthly(dataset,missinglimitmonth,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite)
    }
 
    setwd(dir_core)
