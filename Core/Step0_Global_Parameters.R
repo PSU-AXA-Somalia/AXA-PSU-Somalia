@@ -7,7 +7,7 @@
 # If you update this file, please change the date
 # If you are brand new to R/R-Studio, read this first: https://psu-spatial.github.io/Geog364-2021/pg_Tut1_about.html 
 #================================================================================================================
-globalparams_lastupdated <- as.Date("2021-11-07")
+globalparams_lastupdated <- as.Date("2021-11-14")
 #runsetparamdate_DONOTDELETE
 
 #================================================================================================================
@@ -24,7 +24,14 @@ globalparams_lastupdated <- as.Date("2021-11-07")
    # Do you want messages on your screen?
    #---------------------------------------------------------------------------------
     verbose <- TRUE
-
+    
+   #---------------------------------------------------------------------------------
+   # Are you able to download/install packages from github?
+   # Likely TRUE if you have admin access on your computer, FALSE if its a work computer
+   # and your organisation blocks it.  Try true and see if it works.
+   #---------------------------------------------------------------------------------
+    github <- TRUE    
+    
    #---------------------------------------------------------------------------------
    # Are you running on a supercomputer/HPC platform? TRUE
    # Or on a single desktop/laptop  FALSE
