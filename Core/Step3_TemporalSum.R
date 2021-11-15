@@ -1,6 +1,7 @@
 ##########################################################################################
 # STEP3_TemporalSum: THIS WILL REFORMAT ALL PRODUCTS TO A STANDARD GEOTIF
-# HLG 2021-10-31, V5
+# HLG 2021-10-31, 
+# v6. It will also now fill in missing data with blanks
 #  
 # This script will temporally average the satellite data to pentadal, dekadal and monthly
 # formats.  You should be running R-Studio using the R project
@@ -27,7 +28,6 @@
   #---------------------------------------------------------------------------------------
    overwrite <- FALSE
 
-   
 #======================================================================================== 
 # RUN THE SCRIPTS, SELECT ALL THE TEXT IN THE WHOLE FILE AND PRESS RUN-ALL
 #========================================================================================= 
@@ -35,8 +35,6 @@
   # Load the functions     
   #---------------------------------------------------------------------------------------
    source("Step0_Global_Parameters.R")
-   source(paste(dir_code,"3_TemporalSumFunctions.R",sep=sep))
-   source(paste(dir_code,"3b_TemporalSumFunctionsSub.R",sep=sep))
 
   #------------------------------------------------------------------------------------------
   # Find out which daily datasets there are
@@ -44,19 +42,15 @@
   #------------------------------------------------------------------------------------------
    Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)
 
-  #------------------------------------------------------------------------------------------
-  # Run the scripts, highlight everything and press Run-All (or command/ctrl Enter)
-  #------------------------------------------------------------------------------------------
-   for(n_data in seq_along(Daily_datasetlist)){
-      dataset <- Daily_datasetlist[n_data]   
-      
-      if(verbose %in% c(TRUE,"Limited")){message(paste("\n Dataset: ",dataset))}
-      
-      pentadcreated <- makepentadal(dataset,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite)
-      dekadcreated  <- makedekadal(dataset,missinglimitdekad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite)
-      monthcreated  <- makemonthly(dataset,missinglimitmonth,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite)
-   }
-
+   #------------------------------------------------------------------------------------------
+   # Run the code
+   #------------------------------------------------------------------------------------------
+   source(paste(dir_code,"3b_TemporalSumFunctionsSub.R",sep=sep))
+   source(paste(dir_code,"3_TemporalSumFunctions.R",sep=sep))
+   
+   #------------------------------------------------------------------------------------------
+   # Tidy up
+   #------------------------------------------------------------------------------------------
    setwd(dir_core)
    rm(list=ls())
    

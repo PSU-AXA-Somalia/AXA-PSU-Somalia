@@ -1,4 +1,6 @@
 
+
+
 #=================================================================================
 # This creates the temporal sum of all the data
 #=================================================================================
@@ -127,3 +129,46 @@ makemonthly <-  function(dataset,missinglimitmonth,dir_data_remote_BGeoTif_daily
 }
 ### END OF MONTHLY
 
+
+
+##########################################################################################
+# CODE
+
+#------------------------------------------------------------------------------------------
+# Run the scripts, highlight everything and press Run-All (or command/ctrl Enter)
+#------------------------------------------------------------------------------------------
+for(n_data in seq_along(Daily_datasetlist)){
+   dataset <- Daily_datasetlist[n_data]   
+   
+   if(verbose %in% c(TRUE,"Limited")){message(paste("\n Dataset: ",dataset))}
+   
+   pentadcreated <- makepentadal(dataset,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite)
+   dekadcreated  <- makedekadal(dataset,missinglimitdekad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite)
+   monthcreated  <- makemonthly(dataset,missinglimitmonth,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite)
+   
+   
+   files_in.daily    <- list.files(paste(dir_data_remote_BGeoTif_daily,dataset,sep=sep))
+   files_in.daily    <- files_in.daily[grep(".tif",files_in.daily)]
+   
+   #------------------------------------------------------------------------------
+   # Now make a datelist by extracting the date from the filename
+   #------------------------------------------------------------------------------
+   date.list    <-  data.frame(Date=as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d"),
+                               Sat=files_in.daily)
+   fulldatelist <-  data.frame(Date=seq(from=min(date.list$Date),to=max(date.list$Date),by="d"),all=TRUE)
+   fulldatelist <-  merge(fulldatelist,date.list,by="Date",all.x=TRUE)
+   samplefile   <-  raster(paste(dir_data_remote_BGeoTif_daily,dataset,fulldatelist$Sat[min(which(is.na(fulldatelist$Sat)==FALSE))],sep=sep))
+   samplefile[,] <- NA
+   
+   if(length(which(is.na(fulldatelist$Sat)==TRUE))>0){
+      missinglist <-  fulldatelist[which(is.na(fulldatelist$Sat)==TRUE),]
+      for(m in 1:nrow(missinglist)){
+         tmp <- samplefile
+         names(tmp) <- paste(dataset,format.Date(missinglist$Date[m],"%Y.%m.%d"))
+         writeRaster(tmp, filename=paste(dir_data_remote_BGeoTif_daily,dataset,paste(dataset,"_",missinglist$Date[m],".tif",sep=""),sep=sep), 
+                     format="GTiff", overwrite=TRUE)
+         if(verbose %in% c(TRUE,"Limited")){message(paste("    Writing blank file for date: ",missinglist$Date[m]))}
+         
+      }        
+   }
+}
