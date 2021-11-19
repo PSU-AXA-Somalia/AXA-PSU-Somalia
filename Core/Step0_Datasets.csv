@@ -1,7 +1,7 @@
-﻿Family,Dataset,Version,Modified,ConvertScript
-rain,ARC2,1,,2_Extract_rain_ARC2_1.R
-rain,RFE2,1,,2_Extract_rain_RFE2_1.R
-rain,CHIRPS,2,,2_Extract_rain_CHIRPS_2_Raw.R
-rain,CHIRPS,2,Cropped,2_Extract_rain_CHIRPS_2_Cropped.R
-rain,TAMSAT,3.1,,2_Extract_rain_TAMSAT_31_Raw.R
-sm,TAMSAT,1,,2_Extract_sm_TAMSAT_1.R
+﻿Key,Family,Dataset,Version,Modified,ConvertScript
+1,rain,ARC2,1,,2_Extract_rain_ARC2_1.R
+2,rain,RFE2,1,,2_Extract_rain_RFE2_1.R
+3,rain,CHIRPS,2,,2_Extract_rain_CHIRPS_2_Raw.R
+4,rain,CHIRPS,2,Cropped,2_Extract_rain_CHIRPS_2_Cropped.R
+5,rain,TAMSAT,3.1,,2_Extract_rain_TAMSAT_31_Raw.R
+6,sm,TAMSAT,1,,2_Extract_sm_TAMSAT_1.R
