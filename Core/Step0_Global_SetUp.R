@@ -4,15 +4,14 @@
 #================================================================================================================
 if(verbose){message("Step 0: Loading Global Parameters")}
 
-
 #================================================================================================================
 # Check if R and R studio are out of date
 #================================================================================================================
 if (rstudioapi::versionInfo()$version < "1.4.17") {
   warning("Your R-Studio is out of date and this code might not work. Consider updating R-studio!\nVisit: \nhttps://www.rstudio.com/products/rstudio/download/#download")
 }
-if(R.Version()$major < 4.1){
-  warning("Your R version is VERY out of date and this code is likely to break. Consider updating R!\nVisit: https://cran.r-project.org/")
+if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
+  warning("Your R version is out of date and this code is likely to break. Consider updating R!\nVisit: https://cran.r-project.org/")
 }
 
    #---------------------------------------------------------------------------------
@@ -45,16 +44,16 @@ if(R.Version()$major < 4.1){
     cranpackages <- rbind(cranpackages,c("leaflet"   ,    "2.0.4.1"))
     cranpackages <- rbind(cranpackages,c("matlab"     ,   "1.0.2"  ))
     cranpackages <- rbind(cranpackages,c("ncdf4"     ,    "1.17"   ))
-    cranpackages <- rbind(cranpackages,c("parallel"  ,    "4.1.0"  )) 
+    cranpackages <- rbind(cranpackages,c("parallel"  ,    "1.1.0"  )) 
     cranpackages <- rbind(cranpackages,c("raster" ,       "3.5-2"  ))
     cranpackages <- rbind(cranpackages,c("readr"     ,    "2.0.2"  ))
     cranpackages <- rbind(cranpackages,c("remotes"   ,    "2.4.1"  ))
-    cranpackages <- rbind(cranpackages,c("sf"        ,    "1.0-3"  ))
+    cranpackages <- rbind(cranpackages,c("sf"        ,    "1.0-2"  ))
     cranpackages <- rbind(cranpackages,c("sp"        ,    "1.4-5"  ))
     cranpackages <- rbind(cranpackages,c("stringr"   ,    "1.4.0"  ))
     cranpackages <- rbind(cranpackages,c("tidyverse" ,    "1.3.1"  ))
     cranpackages <- rbind(cranpackages,c("dplyr"     ,    "1.0.7"  ))
-    cranpackages <- rbind(cranpackages,c("terra"     ,    "1.4.11"  ))
+    cranpackages <- rbind(cranpackages,c("terra"     ,    "1.4.10"  ))
     cranpackages <- rbind(cranpackages,c("tmap"      ,    "3.3-2"  ))
     cranpackages <- rbind(cranpackages,c("usethis"   ,    "2.1.3"  ))
    
@@ -76,23 +75,38 @@ if(R.Version()$major < 4.1){
     
     # Ones from Github
     flag <- TRUE
-    remotes_installed_packages <- githubpackages$Package %in% rownames(installed.packages())
-    if (any(remotes_installed_packages == FALSE)) {
-       remotes_missing <- githubpackages[!remotes_installed_packages,]
-       
-       for(n in 1:nrow(remotes_missing)){
+    if(use_github_repos == TRUE){
+      remotes_installed_packages <- githubpackages$Package %in% rownames(installed.packages())
+      if (any(remotes_installed_packages == FALSE)) {
+        remotes_missing <- githubpackages[!remotes_installed_packages,]
+        
+        for(n in 1:nrow(remotes_missing)){
           if(verbose){message(paste("           Installing package from Github:",paste(remotes_missing$Github[n],remotes_missing$Package[n],sep="/"),"\n"))}
           test <- try(remotes::install_github(paste(remotes_missing$Github[n],remotes_missing$Package[n],sep="/"),quiet=TRUE,force=TRUE,upgrade="never"),silent=TRUE)
           if((substr(test[1],1,5) %in% "Error")&&(remotes_missing$Package[n] %in% "Greatrex.Functions")){
-              if(verbose){message("WARNING: Unable to load Greatrex.Functions from github\n Loading built in functions:\n")}
-              flag <- FALSE
-              dir_functions <- paste(dir_code,"Global Functions",sep=sep)
-              for(f in 1:length(list.files(dir_functions))){source(paste(dir_functions,list.files(dir_functions)[f],sep=sep))}
-              rm(f)
+            if(verbose){message("WARNING: Unable to load Greatrex.Functions from github\n Loading built in functions:\nTURN github <- FALSE in Step0_Global_Parameters.R to speed up future runs")}
+            flag <- FALSE
+            dir_functions <- paste(dir_code,"Global Functions",sep=sep)
+            for(f in 1:length(list.files(dir_functions))){source(paste(dir_functions,list.files(dir_functions)[f],sep=sep))}
+            rm(f)
           }
-       }
+        }
+      }
+    }else{
+      if(verbose){message(paste("          You selected to not use github, installing functions manually:\n"))}
+      flag <- FALSE
+      dir_functions <- paste(dir_code,"Global Functions",sep=sep)
+      for(f in 1:length(list.files(dir_functions))){source(paste(dir_functions,list.files(dir_functions)[f],sep=sep))}
+      rm(f)
     }
-    
+    #---------------------------------------------------------------------------------
+    # If you have been playing with this for a while and there are package download errors
+    # this might be because you have a lock folder invisibly in your libraries folder
+    # google this or talk to helen - but you just need to delete the folder, restart R
+    # and run from the start.
+    #---------------------------------------------------------------------------------
+  
+        
     #---------------------------------------------------------------------------------
     # Final check
     #---------------------------------------------------------------------------------
@@ -100,15 +114,18 @@ if(R.Version()$major < 4.1){
     if (any(installed_packages == FALSE)) {
       stop(paste("CRAN Package install failed:",cranpackages$Package[which(installed_packages==FALSE)],"\n"))
     }
-    installed_remote_packages <- githubpackages$Package %in% rownames(installed.packages())
-    if (any(installed_remote_packages == FALSE)&&(flag==TRUE)) {
-      stop(paste("Github Package install failed:",paste(githubpackages$Github[which(installed_remote_packages==FALSE)],githubpackages$Package[which(installed_remote_packages==FALSE)],sep="/"),"\n"))
-    }      
+    
+    if(use_github_repos == TRUE){
+      installed_remote_packages <- githubpackages$Package %in% rownames(installed.packages())
+      if (any(installed_remote_packages == FALSE)&&(flag==TRUE)) {
+        stop(paste("Github Package install failed:",paste(githubpackages$Github[which(installed_remote_packages==FALSE)],githubpackages$Package[which(installed_remote_packages==FALSE)],sep="/"),"\nTURN github <- FALSE in Step0_Global_Parameters.R"))
+      }  
+    }  
    
     #---------------------------------------------------------------------------------
     # Update any that need updating
     #---------------------------------------------------------------------------------
-    if(updatepackage){ 
+    if(auto_update_packages){ 
       if(verbose){message("        Checking if packages need to be updated")}
       
       # Function to check version
@@ -145,23 +162,23 @@ if(R.Version()$major < 4.1){
           }    
         }
       }       
+    }else{
+      if(verbose){message("        Update packages turned off")}
     }
     
-    
 
-    
-   
   #---------------------------------------------------------------------------------
   # Load packages into R
   #---------------------------------------------------------------------------------
   if(verbose){message("        Loading packages")}
   out <- lapply(cranpackages$Package, function(x) suppressPackageStartupMessages(library(x, character.only = TRUE)))
   if(verbose){message(paste("           Package loaded:",cranpackages$Package,"\n"))}
-  if(flag ==TRUE){
+  
+  if(flag ==TRUE && use_github_repos == TRUE){
     if(verbose){message(paste("           Package loaded:",githubpackages$Package,"\n"))}
     out <- lapply(githubpackages$Package, function(x) suppressPackageStartupMessages(library(x, character.only = TRUE)))
   }else{
-    if(verbose){message(paste("           Greatrex.Functions loaded as individual functions rather than package"))}
+    if(verbose){message(paste("           Greatrex.Functions loaded as individual functions rather than package\n"))}
   }
   
   
@@ -233,7 +250,7 @@ if(R.Version()$major < 4.1){
    suppressWarnings(try(rm(package_needsupdating)))
    suppressWarnings(try(rm(packages)))
    suppressWarnings(try( rm(remotes_installed_packages)))
-   suppressWarnings(try( rm(updatepackage)))
+   suppressWarnings(try( rm(auto_update_packages)))
    
 
 

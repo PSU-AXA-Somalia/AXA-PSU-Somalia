@@ -7,7 +7,7 @@
 # If you update this file, please change the date
 # If you are brand new to R/R-Studio, read this first: https://psu-spatial.github.io/Geog364-2021/pg_Tut1_about.html 
 #================================================================================================================
-globalparams_lastupdated <- as.Date("2021-11-14")
+globalparams_lastupdated <- as.Date("2021-11-19")
 #runsetparamdate_DONOTDELETE
 
 #================================================================================================================
@@ -15,8 +15,8 @@ globalparams_lastupdated <- as.Date("2021-11-14")
 #================================================================================================================
    #---------------------------------------------------------------------------------
    # Main directory (e.g. the location of the github download folder)
-   # You can also type the command getwd() 
-   # into the console and copy/paste the answer
+   # To find this, type the command getwd() into the console and copy/paste the answer
+   # IF YOU ARE RUNNING ON WINDOWS, any initial \\ need to be encased in more \\ e.g.  \\ becomes \\\\
    #---------------------------------------------------------------------------------
     dir_main <- "/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Documents/GitHub/Somalia/AXA-PSU-Somalia"
 
@@ -26,41 +26,26 @@ globalparams_lastupdated <- as.Date("2021-11-14")
     verbose <- TRUE
     
    #---------------------------------------------------------------------------------
-   # Are you able to download/install packages from github?
-   # Likely TRUE if you have admin access on your computer, FALSE if its a work computer
-   # and your organisation blocks it.  Try true and see if it works.
+   # Are you able to download/install packages from github? Try true and see if it works
+   # 
+   # [Likely TRUE if you have admin access on your computer, FALSE if its a work computer
+   # and your organisation blocks it].  If you see it constantly fail to download from github,
+   # turn to FALSE
+   #
+   # If your R version is struggling to install updates, try turning updatepackage <- FALSE
    #---------------------------------------------------------------------------------
-    github <- TRUE    
+    use_github_repos     <- TRUE    
+    auto_update_packages <- FALSE
     
-   #---------------------------------------------------------------------------------
-   # Are you running on a supercomputer/HPC platform? TRUE
-   # Or on a single desktop/laptop  FALSE
-   #---------------------------------------------------------------------------------
+    #---------------------------------------------------------------------------------
+    # Are you running on a supercomputer/HPC platform? TRUE
+    # Or on a single desktop/laptop  FALSE
+    #---------------------------------------------------------------------------------
     PSUSuperComputer <- FALSE
-
-    #---------------------------------------------------------------------------------
-    # Directory separator:  
-    # Type 
-    #  getwd() 
-    # into your console (including the empty parentheses) and press enter.
-    # This will show you your current directory
-    # Is the separator symbol between subdirectories "/" or "\\" ?  
-    #---------------------------------------------------------------------------------
-    sep <- "/"     
-
-    #---------------------------------------------------------------------------------
-    # Update packages:
-    # Do you want this code to attempt to auto-update any packages that are not 
-    # recent enough? Recommended TRUE unless you know this will break your other code
-    # Seee Step0_Global_SetUp.R for package/version list.
-    #---------------------------------------------------------------------------------
-    updatepackage <- TRUE
     
-
 #================================================================================================================
 # 2. SPATIAL - defaults are probably fine here
 #================================================================================================================
-
    #---------------------------------------------------------------------------------
    # Spatial Params, what map projection CRS code do you want to apply?
    # 4326 is long/lat
@@ -77,6 +62,12 @@ globalparams_lastupdated <- as.Date("2021-11-14")
 # 3. DIRECTORIES SUB STRUCTURE - you can edit sub-folder names here. 
 # It will also auto-create any that don't exist, defaults probably fine
 #=================================================================================
+  #---------------------------------------------------------------------------------
+  # Legacy directory separator. It will likely always be "/"
+  # now windows has its act together in R.
+  #---------------------------------------------------------------------------------
+    sep <- "/"       
+     
    #Level 0 
    dir_core        <- paste(dir_main,"Core",sep=sep)
    dir_runset      <- paste(dir_main,"Runset",sep=sep)
