@@ -14,13 +14,6 @@ globalparams_lastupdated <- as.Date("2021-11-19")
 # 1. GENERAL
 #================================================================================================================
    #---------------------------------------------------------------------------------
-   # Main directory (e.g. the location of the github download folder)
-   # To find this, type the command getwd() into the console and copy/paste the answer
-   # IF YOU ARE RUNNING ON WINDOWS, any initial \\ need to be encased in more \\ e.g.  \\ becomes \\\\
-   #---------------------------------------------------------------------------------
-    dir_main <- "/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Documents/GitHub/Somalia/AXA-PSU-Somalia"
-
-   #---------------------------------------------------------------------------------
    # Do you want messages on your screen?
    #---------------------------------------------------------------------------------
     verbose <- TRUE
@@ -66,8 +59,26 @@ globalparams_lastupdated <- as.Date("2021-11-19")
   # Legacy directory separator. It will likely always be "/"
   # now windows has its act together in R.
   #---------------------------------------------------------------------------------
-    sep <- "/"       
-     
+   sep <- "/"       
+ 
+  #---------------------------------------------------------------------------------
+  # Main directory (e.g. the location of the github download folder)
+  # You SHOULD be runnnig via your project so it can auto find this    
+  #---------------------------------------------------------------------------------
+  if(("Step0_Core_PROJECTFILE.Rproj" %in% list.files())){
+     dir_main <- substr(getwd(),start=1,stop=nchar(getwd())-5)
+  }else{     
+     if("dir_main" %in% ls()){
+        if(verbose){message("Step 0: you were not in dir_main when running this. Weird.\n Are you debugging?\nChanging main directory back")}
+        setwd(paste(dir_main,"Core",sep=sep))
+     }else{
+        message(paste("I don't think you opened R by double clicking Step0_Core_PROJECTFILE.Rproj\n Your current directory is", 
+                   getwd(),"\n The code is looking for Step0_Core_PROJECTFILE.Rproj in this directory but can only see:"))
+        paste(list.files())
+        stop("CLOSE R-STUDIO.  RE-OPEN R-STUDIO BY DOUBLE CLICKING Step0_Core_PROJECTFILE.Rproj")
+     }
+  }
+
    #Level 0 
    dir_core        <- paste(dir_main,"Core",sep=sep)
    dir_runset      <- paste(dir_main,"Runset",sep=sep)

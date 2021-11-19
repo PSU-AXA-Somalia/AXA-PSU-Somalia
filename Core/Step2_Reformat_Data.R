@@ -6,18 +6,19 @@
 # This code takes all of that and makes it a standardized GeoTif that can be used in the
 # rest of the code.
 #
-##########################################################################################
-#-----------------------------------------------------------------------------------------
-# YOU SHOULD HAVE OPENED R-STUDIO BY DOUBLE CLICKING THE PROJECT FILE
-# At the top of your screen, it should say "Core - R-Studio" 
-# and the files tab should be looking in the main folder. 
+# YOU SHOULD HAVE OPENED R-STUDIO BY DOUBLE CLICKING Step0_Core_PROJECTFILE.Rproj
+# At the top of your screen, it should say "Core - R-Studio" & the files tab should be looking in the main folder. 
 # If not, close R-Studio and reopen correctly
 #
-# This code clears the workspace and load the global parameters
+##########################################################################################
+#-----------------------------------------------------------------------------------------
+# YOU SHOULD HAVE OPENED R-STUDIO BY DOUBLE CLICKING Step0_Core_PROJECTFILE.Rproj
+# At the top of your screen, it should say "Core - R-Studio" & the files tab should be looking in the main folder. 
+# If not, close R-Studio and reopen correctly
 #-----------------------------------------------------------------------------------------
  rm(list=ls())
  source("Step0_Global_Parameters.R")
-
+ 
 #=========================================================================================
 # GENERAL PARAMETERS - ANSWER THESE QUESTIONS
 #=========================================================================================
