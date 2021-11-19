@@ -4,6 +4,17 @@
 #================================================================================================================
 if(verbose){message("Step 0: Loading Global Parameters")}
 
+
+#================================================================================================================
+# Check if R and R studio are out of date
+#================================================================================================================
+if (rstudioapi::versionInfo()$version < "1.4.17") {
+  warning("Your R-Studio is out of date and this code might not work. Consider updating R-studio!\nVisit: \nhttps://www.rstudio.com/products/rstudio/download/#download")
+}
+if(R.Version()$major < 4.1){
+  warning("Your R version is VERY out of date and this code is likely to break. Consider updating R!\nVisit: https://cran.r-project.org/")
+}
+
    #---------------------------------------------------------------------------------
    # Just stops spatial update errors from R. IGNORE
    #---------------------------------------------------------------------------------
@@ -224,13 +235,7 @@ if(verbose){message("Step 0: Loading Global Parameters")}
    suppressWarnings(try( rm(remotes_installed_packages)))
    suppressWarnings(try( rm(updatepackage)))
    
-   if (rstudioapi::versionInfo()$version < "1.4.17") {
-     warning("Your R-Studio is out of date and this code might not work. Consider updating R-studio!\nVisit: \nhttps://www.rstudio.com/products/rstudio/download/#download")
-   }
-   if(R.Version()$major < 4){
-     warning("Your R version is VERY out of date and this code is likely to break. Consider updating R!\nVisit: https://cran.r-project.org/")
-   }
-   
+
 
    
    
