@@ -88,12 +88,11 @@ pentadalmissing <- function(dates,datasetpentaddir,missinglimitpentad){
 #==========================================================================================================================
 # PENTADSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
 #==========================================================================================================================
-pentadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetpentaddir,dataset,files_in.daily,dates,overwrite){
-   require(Greatrex.Functions)
+pentadsumfunct <- function(nnn,fulldatelist,dir_data_remote_BGeoTif_daily,datasetpentaddir,dataset,files_in.daily,dates,overwrite){
    #------------------------------------------------------------------------------
    # get the pentad wanted and make the output file name
    #------------------------------------------------------------------------------
-   pentadyear <- fulldatelist$pentadyear[n]
+   pentadyear <- fulldatelist$pentadyear[nnn]
    outputfile <- paste(datasetpentaddir,paste(dataset,"_pentad_",pentadyear,".tif",sep=""),sep=sep)
    
    #------------------------------------------------------------------------------
@@ -103,9 +102,11 @@ pentadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetp
       inputfiles <- paste(dir_data_remote_BGeoTif_daily,dataset,
                           files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
                                                   dates$Date[dates$YearPentad %in% pentadyear])],sep=sep)
-      if(length(inputfiles) > 2){
-         writeRaster(rasterstack_mean_fast(stack(inputfiles,quick=TRUE)), filename=outputfile, format="GTiff", overwrite=TRUE)
-      }   
+         if(length(inputfiles) > 2){
+            suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            
+         }
+  
    }   
    return(outputfile)
 }
@@ -229,7 +230,7 @@ dekadalmissing <- function(dates,datasetdekaddir,missinglimitdekad){
 #==========================================================================================================================
 # DEKADSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
 #==========================================================================================================================
-dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetdekaddir,dataset,files_in.daily,dates,overwrite){
+dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetdekaddir,dataset,files_in.daily,dates,overwrite,regrid_flag){
    require(Greatrex.Functions)
    #------------------------------------------------------------------------------
    # get the dekad wanted and make the output file name
@@ -245,7 +246,7 @@ dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetde
                           files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
                                                   dates$Date[dates$YearDekad %in% dekadyear])],sep=sep)
       if(length(inputfiles) > 2){
-         writeRaster(rasterstack_mean_fast(stack(inputfiles,quick=TRUE)), filename=outputfile, format="GTiff", overwrite=TRUE)
+         suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
       }   
    }   
    return(outputfile)
@@ -329,7 +330,7 @@ dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetde
  #==========================================================================================================================
  # MONTHSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
  #==========================================================================================================================
- monthsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetmonthdir,dataset,files_in.daily,dates,overwrite){
+ monthsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetmonthdir,dataset,files_in.daily,dates,overwrite,regrid_flag){
     require(Greatrex.Functions)
     #------------------------------------------------------------------------------
     # get the dekad wanted and make the output file name
@@ -346,7 +347,7 @@ dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetde
                                                    dates$Date[dates$YearMonth %in% monthyear])],sep=sep)
        
        if(length(inputfiles) > 2){
-          writeRaster(rasterstack_mean_fast(stack(inputfiles,quick=TRUE)), filename=outputfile, format="GTiff", overwrite=TRUE)
+          suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
        }   
     }   
     return(outputfile)

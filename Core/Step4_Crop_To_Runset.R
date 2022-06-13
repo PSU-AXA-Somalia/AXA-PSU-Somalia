@@ -17,7 +17,7 @@
   #  What do you want to call your runset? E.g. what should the folder be called?
   #  If you want to auto-name from the shapefile/bounding box, then put as NA
   #---------------------------------------------------------------------------------------
-   Runset <- "Bakool_Subset"
+   Runset <- "South_Subset"
  
   #---------------------------------------------------------------------------------------
   # SaveAnalysis 
@@ -49,7 +49,7 @@
   # SubsetOption: Where do you want to subset to?  
   #    A box [1] or to the borders of a shapefile/subset of one? [2]
   #---------------------------------------------------------------------------------------
-    SubsetOption <- 2
+    SubsetOption <- 1
 
        #----------------------------------------------------------------------------------
        # IF OPTION 1 (box) - Else set each to NA
@@ -59,8 +59,8 @@
        #  Add in degrees the width of the buffer/border/margin 
        #  Else set to 0.
        #----------------------------------------------------------------------------------
-         Box.MinLong <- 40.9785   ;   Box.MaxLong <- 43.14
-         Box.MinLat  <- 1.230771  ;   Box.MaxLat  <- 4.305806
+         Box.MinLong <- 40.5   ;   Box.MaxLong <- 45
+         Box.MinLat  <- 1  ;   Box.MaxLat  <- 5.25
 
          Box.buffer  <- 0.2
 
@@ -96,7 +96,7 @@
            Box.buffer  <- 0.2
            
            Shapefile.ColName  <- "NAME_1"
-           Shapefile.ColValue <- "Bakool"  
+           Shapefile.ColValue <- "Gedo"  
 
            
 #=========================================================================================
@@ -104,7 +104,7 @@
 # Highlight everything in this script and press Run All
 #=========================================================================================
  source(paste(dir_code,"4_Crop_To_Runset_code.R",sep=sep))
-           
+ dir.remove(dir_data_remote_BGeoTif_daily_regrid_10)          
 
            
 #=========================================================================================

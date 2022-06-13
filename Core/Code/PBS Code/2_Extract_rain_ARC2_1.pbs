@@ -1,0 +1,41 @@
+#!/bin/bash
+
+#PBS -l nodes=19:ppn=5:stmem
+#PBS -l walltime=00:15:00
+#PBS -A open
+#PBS -j oe
+
+# Get started
+echo "Job started on `hostname` at `date`"
+
+# Load the required R and openmpi modules
+module purge
+module use /gpfs/group/RISE/sw7/modules
+module load openmpi/4.1.0-gcc-4.8.5
+module load r
+
+# Print out module information
+echo " "
+echo "The following modules are in use:"
+module list
+echo " "
+
+# Go to the correct place
+cd $PBS_O_WORKDIR
+# cd /gpfs/group/hlg5155/default/RISE_grant/Main/Code
+
+# Run the job
+#
+# The mca option controls the network selection for the MPI processes
+# the way we have it set up on ROAR requires this option as set below. 
+# We also use (which mpirun) and (which R) to control execution so that 
+# the versions from the modules we load are used.
+# PBS_NODEFILE and PBS_NP are set automatically by PBS based on the 
+# user specified nodes and ppn options in the preamble.
+
+
+$(which mpirun) --mca btl '^openib' --hostfile $PBS_NODEFILE -np $PBS_NP -x LD_LIBRARY_PATH $(which Rscript) 2_Extract_rain_ARC2_1_PBSWrapper.R
+
+# Finish up
+echo "Job run ending on `hostname` at `date`" 
+

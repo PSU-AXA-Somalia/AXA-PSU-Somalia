@@ -1,7 +1,9 @@
-﻿Key,Family,Dataset,Version,Modified,ConvertScript
-1,rain,ARC2,1,,2_Extract_rain_ARC2_1.R
-2,rain,RFE2,1,,2_Extract_rain_RFE2_1.R
-3,rain,CHIRPS,2,,2_Extract_rain_CHIRPS_2_Raw.R
-4,rain,CHIRPS,2,Cropped,2_Extract_rain_CHIRPS_2_Cropped.R
-5,rain,TAMSAT,3.1,,2_Extract_rain_TAMSAT_31_Raw.R
-6,sm,TAMSAT,1,,2_Extract_sm_TAMSAT_1.R
+﻿Key,Family,Dataset,Version,Modified,ConvertScript,IRIStem,Enddate
+1,tmax,CHIRTS,1,,2_Extract_tmax_CHIRTS_1.R,https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRTS/.v1.0/.daily/.global/.0p05/.tmax,NA
+2,tmin,CHIRTS,1,,2_Extract_tmin_CHIRTS_1.R,https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRTS/.v1.0/.daily/.global/.0p05/.tmin,NA
+3,rhum,CHIRTS,1,,2_Extract_rhum_CHIRTS_1.R,NA,NA
+4,rain,ARC2,1,,2_Extract_rain_ARC2_1.R,https://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NCEP/.CPC/.FEWS/.Africa/.DAILY/.ARC2/.daily/.est_prcp,NA
+5,rain,RFE2,1,,2_Extract_rain_RFE2_1.R,http://iridl.ldeo.columbia.edu/SOURCES/.NOAA/.NCEP/.CPC/.FEWS/.Africa/.DAILY/.RFEv2/.est_prcp,NA
+6,rain,CHIRPS,2,,2_Extract_rain_CHIRPS_2.R,https://iridl.ldeo.columbia.edu/SOURCES/.UCSB/.CHIRPS/.v2p0/.daily-improved/.global/.0p05/.prcp,NA
+7,rain,TAMSAT,3.1,,2_Extract_rain_TAMSAT_31.R,https://iridl.ldeo.columbia.edu/SOURCES/.Reading/.Meteorology/.TAMSAT/.v3p1/.daily/.rfe_filled,NA
+8,sm,TAMSAT,1,,2_Extract_sm_TAMSAT_1.R,https://gws-access.jasmin.ac.uk/public/odanceo/soil_moisture/nc/tamsat_nceo_da_wb_v1p0p1_,2016-12-31

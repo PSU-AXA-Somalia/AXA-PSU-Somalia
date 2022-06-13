@@ -1,10 +1,10 @@
 #=================================================================================
-# HLG 2021,
-# This converts raw RFE2 data to my standardised format
+# HLG 2022,
+# This converts raw CHIRTtmin data to my standardised format
 #=================================================================================
 # Dataset parameters
 #---------------------------------------------------------------------------------
-# family    <-"rain"  ;  dataset   <- "RFE2"
+# family    <-"Tmin"  ;  dataset   <- "CHIRTS"
 # version   <- 1      ;  modified  <- "Raw"
 # overwrite <- FALSE
 
@@ -31,7 +31,7 @@ if((nchar(modified) > 0)&(is.na(modified)==FALSE)){
    StemIn  <- paste(family,dataset,version,"Raw",sep="_")
    StemOut <- paste(family,dataset,version,"Geo",sep="_")
 }
-dir_data_in  <- paste(dir_data_remote_ARaw,StemIn,sep=sep)
+
 
 #---------------------------------------------------------------------------------
 # Now set up the output folders
@@ -63,27 +63,40 @@ if(length(file_list.out)<=0){dataoverwrite <- TRUE}else{dataoverwrite <- overwri
 #---------------------------------------------------------------------------------
 # List input zip files
 #---------------------------------------------------------------------------------
-file_list.in <- list.files(dir_data_in)[grep(".zip",list.files(dir_data_in))]
+
+# I'm assuming the data is stored in folders simply named the year
+dir_data_in  <- paste(dir_data_remote_ARaw,StemIn,sep=sep)
+yearfolders <- list.files(dir_data_in)
+yearfolders <- suppressWarnings(yearfolders[which(as.numeric(yearfolders) %in% 1980:2060)])
+
+# Now let's make a master list of input files and their source locations
+file_list.in <- paste(dir_data_in,list.files(dir_data_in,recursive=TRUE),sep=sep)
+file_list.in <- file_list.in[grep(".tif",file_list.in)]
+
+if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"))}
 
 #---------------------------------------------------------------------------------
-# Extract Lon/Lat for RFE
+# Extract Lon/Lat for CHIRPS
 #---------------------------------------------------------------------------------
-Dataset_Example <- suppressWarnings(raster(unzip(paste(dir_data_in,file_list.in[5],sep=sep)),crs=4236))
-lat     <- coordinates(Dataset_Example)[,1]
-long    <- coordinates(Dataset_Example)[,2]
+testval <- round(mean(length(file_list.in)))
+suppressWarnings(rm(Dataset_Example))
+Dataset_Example <- suppressWarnings(raster(file_list.in[testval], crs=4326))
+lat     <- coordinates(Dataset_Example)[,2]
+long    <- coordinates(Dataset_Example)[,1]
+
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
    fwrite(list(long),paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
 }
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
    fwrite(list(lat),paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE) 
-}        
-file.remove(substr(file_list.in[5],start=1,stop=nchar(file_list.in[5])-4))
+}  
 
 #---------------------------------------------------------------------------------
 # Extract dates from the files
 #---------------------------------------------------------------------------------
-date.list <- unlist(lapply(strsplit(file_list.in,"africa_rfe."),"[",2))
-date.list <- as.Date(substr(date.list,1,8),format="%Y%m%d")
+
+date.list <- substr(unlist(lapply(strsplit(file_list.in,"Tmin."),"[",2)),1,10)
+date.list <- as.Date(date.list,format="%Y.%m.%d")
 file_list.in <- file_list.in[order(date.list)]
 date.list <- date.list[order(date.list)]
 
@@ -91,12 +104,12 @@ date.list <- date.list[order(date.list)]
 dates        <- suppressWarnings(makedates(date.list))
 dates        <- dates[which(is.na(dates$Date)==FALSE),]
 dates$file_list.in <- file_list.in
-write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)  
 
+write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)   
 #---------------------------------------------------------------------------------
-# CREATE RFE FUNCTION
+# CREATE CHIRTS FUNCTION
 #---------------------------------------------------------------------------------
-CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
+CreateCHIRTSTMin <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
    file_loc.out  <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
@@ -110,42 +123,30 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
       continue <- TRUE
    }
    
-   if(continue == TRUE){
-      # Unzip the data, and rename
-      file_name.in <- paste(dir_data_in,file_list.in[f],sep=sep)
-      
-      if((file.exists(file_name.in))&(continue == TRUE)){continue <- TRUE}else{continue <- FALSE}
-   }
+   # Unzip the data, and rename
+   file_name.in <- file_list.in[f]
+   
+   if((file.exists(file_name.in))&(continue == TRUE)){continue <- TRUE}else{continue <- FALSE}
    
    # If you do...
    if(continue == TRUE){
       
-      # Unzip the data, and rename
-      tmp <- unzip(file_name.in,exdir=dir_data_out)
-      if(is.null(tmp) == FALSE){
-         newlyunzipped <- paste(dir_data_out,substr(file_list.in[f],1,(nchar(file_list.in[f])-4)),sep=sep)
-         
-         # Read in and change the projection
-         r <- suppressWarnings(terra::rast(newlyunzipped))
-         crs(r) <- paste("EPSG:",globalcrs,sep="")
-         r[r < 0] <- NA
-         
-         if(length(unique(values(r)))<=1){
-            return(paste("EMPTY",file_name.out))
-         }else{
-            
-            # Write to file
-            #if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-            suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
-            
-            # Write regridded to file - to be added
-            suppressWarnings(suppressMessages(file.remove(newlyunzipped)))
-            return(file_name.out)
-         }
-         
+      # Read in and change the projection
+      # a <- Sys.time()
+      r <- suppressWarnings(rast(file_name.in))
+      crs(r) <- paste("EPSG:",globalcrs,sep="")
+      r[r < -90] <- NA
+      r[r > 999] <- NA
+      
+      #print(Sys.time() -a)
+      
+      if(length(unique(values(r)))<=1){
+         return(paste("EMPTY",file_name.out))
       }else{
-         return(paste("CORRUPTED",file_name.out))
-         
+         if(file.exists(file_loc.out)){file.remove(file_loc.out)}
+         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         # Write regridded to file - to be added
+         return(file_name.out)
       }
    }else{
       return(paste("IGNORED",file_name.out))
@@ -157,24 +158,14 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
 #---------------------------------------------------------------------------------
 # ForEach
 a <- Sys.time()
+if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
 
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,
-                                                              StemOut,date.list,file_list.in,globalcrs,
-                                                              dataoverwrite)
-
+myres <- foreach(f = 1:length(date.list)) %dopar%  CreateCHIRTSTMin(f,dir_data_in,StemIn,dir_data_out,StemOut,
+                                                                    date.list,file_list.in,
+                                                                    globalcrs,dataoverwrite)
 
 print(Sys.time() -a)
 
-
-
-#  file.chunks <- split(dates,dates$Year)
-#  for(time in 1:length(file.chunks)){
-#    if(verbose){message(paste("       Year:",file.chunks[[time]]$Year[1]))}
-#    myres <- foreach(f = 1:length(file.chunks[[time]])) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,StemOut,
-#                                                                             date.list=file.chunks[[time]]$Date,
-#                                                                             file_list.in=file.chunks[[time]]$file_list.in,
-#                                                                             globalcrs,dataoverwrite)
-#  }
 
 
 

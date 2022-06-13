@@ -66,24 +66,52 @@ if(length(file_list.out)<=0){dataoverwrite <- TRUE}else{dataoverwrite <- overwri
 file_list.in <- list.files(dir_data_in)[grep(".zip",list.files(dir_data_in))]
 
 #---------------------------------------------------------------------------------
-# Extract Lon/Lat for RFE
+# TAMSAT data is zipped by year, let's make a folder with it all unzipped
 #---------------------------------------------------------------------------------
-Dataset_Example <- suppressWarnings(raster(unzip(paste(dir_data_in,file_list.in[5],sep=sep)),crs=4236))
-lat     <- coordinates(Dataset_Example)[,1]
-long    <- coordinates(Dataset_Example)[,2]
+TAMSATdatadir <- paste(dir_data_in,"AllDataUnzipped",sep=sep)
+if(!(file.exists(TAMSATdatadir))){dir.create(TAMSATdatadir)}
+
+#---------------------------------------------------------------------------------
+# Need to find the final year because I do want to overwrite that - I will assume that
+# it needs completing each time.
+#---------------------------------------------------------------------------------
+if(verbose==TRUE){print("unzipping")}
+for(f in 1:length(file_list.in)){
+   if(verbose==TRUE){print(file_list.in[f])}
+   a <- suppressWarnings(unzip(paste(dir_data_in,file_list.in[f],sep=sep),
+                               exdir=TAMSATdatadir, overwrite=FALSE,junkpaths = TRUE,list=FALSE))
+} 
+
+#---------------------------------------------------------------------------------
+# OK now pretend that never happened
+#---------------------------------------------------------------------------------
+dir_data_inold <- dir_data_in
+dir_data_in <- TAMSATdatadir
+file_list.in <- list.files(dir_data_in)[grep(".nc",list.files(dir_data_in))]
+if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"))}
+
+#---------------------------------------------------------------------------------
+# Extract Lon/Lat for TAMSAT
+#---------------------------------------------------------------------------------
+Dataset_Example <- suppressWarnings(raster(paste(dir_data_in,file_list.in[5],sep=sep),crs=4236))
+lat     <- coordinates(Dataset_Example)[,2]
+long    <- coordinates(Dataset_Example)[,1]
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
-   fwrite(list(long),paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
+   data.table::fwrite(list(long),paste(dir_data_in,   sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
+   data.table::fwrite(list(long),paste(dir_data_inold,sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
 }
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
-   fwrite(list(lat),paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE) 
-}        
-file.remove(substr(file_list.in[5],start=1,stop=nchar(file_list.in[5])-4))
+   data.table::fwrite(list(lat),file=paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
+   data.table::fwrite(list(lat),file=paste(dir_data_inold,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
+}
+
+
 
 #---------------------------------------------------------------------------------
 # Extract dates from the files
 #---------------------------------------------------------------------------------
-date.list <- unlist(lapply(strsplit(file_list.in,"africa_rfe."),"[",2))
-date.list <- as.Date(substr(date.list,1,8),format="%Y%m%d")
+date.list <- unlist(lapply(strsplit(file_list.in,".v3.1.nc"),"[",1))
+date.list <- as.Date(substr(date.list,4,13),format="%Y_%m_%d")
 file_list.in <- file_list.in[order(date.list)]
 date.list <- date.list[order(date.list)]
 
@@ -91,12 +119,13 @@ date.list <- date.list[order(date.list)]
 dates        <- suppressWarnings(makedates(date.list))
 dates        <- dates[which(is.na(dates$Date)==FALSE),]
 dates$file_list.in <- file_list.in
-write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)  
 
+write.csv(dates,paste(dir_data_inold,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)   
+write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)   
 #---------------------------------------------------------------------------------
-# CREATE RFE FUNCTION
+# CREATE TAMSAT FUNCTION
 #---------------------------------------------------------------------------------
-CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
+CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
    file_loc.out  <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
@@ -110,42 +139,26 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
       continue <- TRUE
    }
    
-   if(continue == TRUE){
-      # Unzip the data, and rename
-      file_name.in <- paste(dir_data_in,file_list.in[f],sep=sep)
-      
-      if((file.exists(file_name.in))&(continue == TRUE)){continue <- TRUE}else{continue <- FALSE}
-   }
+   # Unzip the data, and rename
+   file_name.in <- paste(dir_data_in,file_list.in[f],sep=sep)
+   
+   if((file.exists(file_name.in))&(continue == TRUE)){continue <- TRUE}else{continue <- FALSE}
    
    # If you do...
    if(continue == TRUE){
+      # Read in and change the projection
+      r <- rast(file_name.in)$"rfe_filled"
+      crs(r) <- paste("EPSG:",globalcrs,sep="")
+      r[r < 0] <- NA
       
-      # Unzip the data, and rename
-      tmp <- unzip(file_name.in,exdir=dir_data_out)
-      if(is.null(tmp) == FALSE){
-         newlyunzipped <- paste(dir_data_out,substr(file_list.in[f],1,(nchar(file_list.in[f])-4)),sep=sep)
-         
-         # Read in and change the projection
-         r <- suppressWarnings(terra::rast(newlyunzipped))
-         crs(r) <- paste("EPSG:",globalcrs,sep="")
-         r[r < 0] <- NA
-         
-         if(length(unique(values(r)))<=1){
-            return(paste("EMPTY",file_name.out))
-         }else{
-            
-            # Write to file
-            #if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-            suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
-            
-            # Write regridded to file - to be added
-            suppressWarnings(suppressMessages(file.remove(newlyunzipped)))
-            return(file_name.out)
-         }
-         
+      if(length(unique(values(r)))<=1){
+         return(paste("EMPTY",file_name.out))
       }else{
-         return(paste("CORRUPTED",file_name.out))
-         
+         # Write to file
+         if(file.exists(file_loc.out)){file.remove(file_loc.out)}
+         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         a<-try(suppressMessages(suppressWarnings(file.remove(paste(file_loc.out,".aux.json",sep="")))))
+         return(file_name.out)
       }
    }else{
       return(paste("IGNORED",file_name.out))
@@ -157,24 +170,14 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
 #---------------------------------------------------------------------------------
 # ForEach
 a <- Sys.time()
+if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
 
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,
-                                                              StemOut,date.list,file_list.in,globalcrs,
-                                                              dataoverwrite)
-
+myres <- foreach(f = 1:length(date.list)) %dopar%  CreateTAMSAT(f,dir_data_in,StemIn,dir_data_out,StemOut,
+                                                                date.list,file_list.in,
+                                                                globalcrs,dataoverwrite)
 
 print(Sys.time() -a)
 
-
-
-#  file.chunks <- split(dates,dates$Year)
-#  for(time in 1:length(file.chunks)){
-#    if(verbose){message(paste("       Year:",file.chunks[[time]]$Year[1]))}
-#    myres <- foreach(f = 1:length(file.chunks[[time]])) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,StemOut,
-#                                                                             date.list=file.chunks[[time]]$Date,
-#                                                                             file_list.in=file.chunks[[time]]$file_list.in,
-#                                                                             globalcrs,dataoverwrite)
-#  }
 
 
 

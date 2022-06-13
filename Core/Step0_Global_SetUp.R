@@ -37,9 +37,14 @@ dir_core        <- paste(dir_main,"Core",sep=sep)
 dir_runset      <- paste(dir_main,"Runset",sep=sep)
 
 #Data Level 1
-dir_data        <- paste(dir_core,"Data",sep=sep)
+if(is.na(RemoteData)){
+   dir_data        <- paste(dir_core,"Data",sep=sep)
+}else{
+   dir_data        <- RemoteData
+}
 dir_code        <- paste(dir_core,"Code",sep=sep)
 
+runsetparamdate_DONOTDELETE <- NA
 runset_foldername_rawoutput  <-  "Output1_RawPlots"
 runset_foldername_visualise   <- "Output2_Visualisation"
 
@@ -47,20 +52,23 @@ runset_foldername_visualise   <- "Output2_Visualisation"
 dir_data_shape           <- paste(dir_data,"1_Shapefiles",    sep=sep)
 dir_data_remote          <- paste(dir_data,"2_Remote_Sensing",sep=sep)
 
+
 #Data Level 3
 dir_data_remote_ARaw       <- paste(dir_data_remote,"0_Raw_data",sep=sep)
 dir_data_remote_BGeoTif    <- paste(dir_data_remote,"1_Raw_geoTifs",sep=sep)
+dir_data_remote_CDerived   <- paste(dir_data_remote,"2_Derived_Statistics",sep=sep)
+
+
 
 #Data Level 4
+dir_data_remote_ARaw_missing    <- paste(dir_data_remote_ARaw,"All_Missing_Filled_Files",sep=sep)
 dir_data_remote_BGeoTif_daily   <-  paste(dir_data_remote_BGeoTif,"A_QC_data_daily",sep=sep)
 dir_data_remote_BGeoTif_pentad  <-  paste(dir_data_remote_BGeoTif,"B_QC_data_pentad",sep=sep)
 dir_data_remote_BGeoTif_dekad   <-  paste(dir_data_remote_BGeoTif,"C_QC_data_dekad",sep=sep)
 dir_data_remote_BGeoTif_month   <-  paste(dir_data_remote_BGeoTif,"D_QC_data_month",sep=sep)
 
-
-
-
-
+#Data Level 5
+dir_data_remote_CDerived_1climate  <-  paste(dir_data_remote_CDerived,"A_Climatologies_Anomalies",sep=sep)
 
 
 
@@ -113,10 +121,13 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
     cranpackages <- rbind(cranpackages,c("stringr"   ,    "1.4.0"  ))
     cranpackages <- rbind(cranpackages,c("tidyverse" ,    "1.3.1"  ))
     cranpackages <- rbind(cranpackages,c("dplyr"     ,    "1.0.7"  ))
-    cranpackages <- rbind(cranpackages,c("terra"     ,    "1.4.10"  ))
+    cranpackages <- rbind(cranpackages,c("terra"     ,    "1.4.10" ))
     cranpackages <- rbind(cranpackages,c("tmap"      ,    "3.3-2"  ))
     cranpackages <- rbind(cranpackages,c("usethis"   ,    "2.1.3"  ))
-   
+    cranpackages <- rbind(cranpackages,c("gdalUtils" ,    "2.0.0"  ))
+    cranpackages <- rbind(cranpackages,c("data.table" ,    "1.0.0"  ))
+    cranpackages <- rbind(cranpackages,c("rgdal" ,    "1.0.0"  ))
+    
     githubpackages <- data.frame(Github="hgreatrex",Package="Greatrex.Functions",Version="0.1.1")
     
     #---------------------------------------------------------------------------------
@@ -274,7 +285,7 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
    create <- sapply(c(dir_data_remote_ARaw,dir_data_remote_BGeoTif),conditionalcreate,silent=TRUE)
    
    #Data Level 4
-   create <- sapply(c(dir_data_remote_BGeoTif_daily,
+   create <- sapply(c(dir_data_remote_BGeoTif_daily,dir_data_remote_ARaw_missing,
                       dir_data_remote_BGeoTif_pentad,
                       dir_data_remote_BGeoTif_dekad,
                       dir_data_remote_BGeoTif_month),conditionalcreate,silent=TRUE)

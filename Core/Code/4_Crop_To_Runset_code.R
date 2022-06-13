@@ -4,7 +4,7 @@
 #---------------------------------------------------------------------------------
 # Set up file structures
 #---------------------------------------------------------------------------------
- products_daily  <-  list.files(dir_data_remote_BGeoTif_daily,pattern="_")
+ products_daily  <-  list.files(dir_data_remote_BGeoTif_daily_regrid_10,pattern="_")
  products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="_")
  products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_")
  products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_")
@@ -60,34 +60,63 @@
  if(verbose){message("  1. Creating runset parameters, saved as Step0_Runset_Parameters.R")}
 
 #---------------------------------------------------------------------------------
-# Read in and store global parameters, editing as necessary
+# Read in and store runset parameters, editing as necessary
 #---------------------------------------------------------------------------------
-LocalParams <- readLines("Step0_Global_Parameters.R")
+LocalParamsWrapper <- readLines("Step0_Global_Parameters.R")
 
- # Show what runset it is
-  LocalParams[[3]] <- paste("# RUNSET PARAMETERS, Runset name:",Runset)
+# Show what runset it is
+ LocalParamsWrapper[[3]] <- paste("# RUNSET PARAMETERS, Runset name:",Runset)
 
- # Add in date updated
-  LocalParmsLine3 <- grep("runsetparamdate_DONOTDELETE",LocalParams)
-  LocalParams[LocalParmsLine3] <- paste("runsetparams_lastupdated <- as.Date(\"",Sys.Date(),"\")",sep="")
-  
-   
+# Add in date updated
+LocalParmsLine3 <- grep("runsetparamdate_DONOTDELETE",LocalParamsWrapper)
+LocalParamsWrapper[LocalParmsLine3] <- paste("runsetparams_lastupdated <- as.Date(\"",Sys.Date(),"\")",sep="")
+
+# Add in new setupfile updated
+LocalParmsLine4 <- grep("Step0_Global_SetUp",LocalParamsWrapper)
+LocalParamsWrapper[LocalParmsLine4] <- str_replace(LocalParamsWrapper[LocalParmsLine4],"Step0_Global_SetUp","Step0_Runset_SetUp")
+
+
+# write out full thing  
+write_lines(LocalParamsWrapper[[1]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep))
+for (m in 2:length(LocalParamsWrapper)){
+   write_lines(LocalParamsWrapper[[m]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep),append=TRUE)
+}  
+
+
+#---------------------------------------------------------------------------------
+# Read in and store runset setup, editing as necessary
+#---------------------------------------------------------------------------------
+LocalParams        <- readLines("Step0_Global_SetUp.R")
+
+# Switch core to runset name
+projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
+newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
+
+LocalParmsLineproj <- grep(projfile,LocalParams)
+for(L in 1:length(LocalParmsLineproj)){
+   LocalParams[LocalParmsLineproj[L]] <- str_replace(LocalParams[LocalParmsLine4],projfile,newprojfile)
+}
+
+LocalParmsLineproj <- grep("dir_main",LocalParams)
+LocalParams[LocalParmsLineproj[1]] <- "  dir_main <- substr(getwd(),start=1,stop=nchar(getwd()))"
+
+
  # Switch core to runset name
-  LocalParams[min(grep("dir_core",LocalParams))] <- paste("   dir_core        <- paste(dir_main, \"Runset\", \"", Runset,"\", sep=sep)" ,sep="")
-  LocalParams[min(grep("dir_main",LocalParams))] <- paste("   dir_main        <- \"", dir_main,"\"" ,sep="")
+  LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <- dir_main,", "\"","../../Core", "\"",",sep=sep" ,sep="")
+  LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- dir_main,", "\"","../Runset", "\"",",sep=sep" ,sep="")
   
  # Makr runset output folders
   LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
-  LocalParams[LocalParmsLine1] <- paste("   dir_analysis_raw <- paste(dir_core, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
+  LocalParams[LocalParmsLine1] <- paste("dir_analysis_raw <- paste(dir_main, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
 
   LocalParmsLine2 <- grep("runset_foldername_visualise",LocalParams)
-  LocalParams[LocalParmsLine2] <- paste("   dir_analysis_vis <- paste(dir_core, \"",runset_foldername_visualise," \",sep=sep)",sep="")
+  LocalParams[LocalParmsLine2] <- paste("dir_analysis_vis <- paste(dir_main, \"",runset_foldername_visualise," \",sep=sep)",sep="")
 
   
 # write out full thing  
-write_lines(LocalParams[[1]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep))
+write_lines(LocalParams[[1]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep))
 for (m in 2:length(LocalParams)){
-  write_lines(LocalParams[[m]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep),append=TRUE)
+  write_lines(LocalParams[[m]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep),append=TRUE)
 }  
 
 
@@ -462,7 +491,9 @@ if(movedata){
   if(verbose){message("  7. Outputting new extent")}
   png(paste(dir_runset,paste("0CroppedArea_",Runset,".png",sep=""),sep=sep))
   plot(crop(samplefile,newbox),main=paste(Runset,": Cropped area",sep=""),asp=1)
-  plot(st_geometry(boundary),add=TRUE)
+  if(SubsetOption %in% 2){
+     plot(st_geometry(boundary),add=TRUE)
+  }     
   dev.off()
   write.csv(print(newbox),paste(dir_runset,paste("0MetaData_",Runset,".csv",sep=""),sep=sep))
   
@@ -611,11 +642,6 @@ projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
 newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
 tmp  <- file.copy(from=paste(dir_core,projfile,sep=sep),to=paste(dir_runset,newprojfile,sep=sep))  
 
-#------------------------------------------------------------------------------ 
-# and move code as needed
-#------------------------------------------------------------------------------ 
-file.copy(from=paste(dir_core,"Step0_Global_SetUp.R",sep=sep),
-          from=paste(dir_runset,"Step0_Global_SetUp.R",sep=sep))
 
 #------------------------------------------------------------------------------ 
 # Open on request

@@ -1,7 +1,7 @@
 ##########################################################################################
 # STEP3_TemporalSum: THIS WILL REFORMAT ALL PRODUCTS TO A STANDARD GEOTIF
 # HLG 2021-10-31, 
-# v6. It will also now fill in missing data with blanks
+# v6. It will also now fill in missing data with blanks and regrid to a standard grid
 #  
 # This script will temporally average the satellite data to pentadal, dekadal and monthly
 # formats.  You should be running R-Studio using the R project
@@ -27,7 +27,26 @@
   # Leave as FALSE unless you suspect the data is corrupted
   #---------------------------------------------------------------------------------------
    overwrite <- FALSE
-
+   
+   #---------------------------------------------------------------------------------------
+   # Do you want to try and find small gaps of missing data from the IRI data library? 
+   # Leave as TRUE unless you have no internet (< 5 day gaps only)
+   #---------------------------------------------------------------------------------------
+   iridl <- TRUE
+   
+   #---------------------------------------------------------------------------------------
+   # There are three options for searching for missing data
+   # "data", from the beginning to end of the data in the folder e.g. just look for gaps
+   # "year", the Jan-1 in the first year of data, to Dec-31 in the final year
+   # "all", all data from the start to present
+   #---------------------------------------------------------------------------------------
+   missingchoice  <- "data"
+   
+   #---------------------------------------------------------------------------------------
+   # What is your regrid template?
+   #---------------------------------------------------------------------------------------
+   regrid_template <- "Grid10.tif"
+   
 #======================================================================================== 
 # RUN THE SCRIPTS, SELECT ALL THE TEXT IN THE WHOLE FILE AND PRESS RUN-ALL
 #========================================================================================= 
@@ -41,10 +60,14 @@
   # If you want to edit the datasets being updated, you can change Daily_datasetlist (not recommended)
   #------------------------------------------------------------------------------------------
    Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)
+   Daily_datasetlist <- Daily_datasetlist[grep("Geo",Daily_datasetlist)]
 
    #------------------------------------------------------------------------------------------
    # Run the code
    #------------------------------------------------------------------------------------------
+   source(paste(dir_code,"3_MissingSubFunctions.R",sep=sep))
+   source(paste(dir_code,"3_MissingReplace.R",sep=sep))
+   
    source(paste(dir_code,"3b_TemporalSumFunctionsSub.R",sep=sep))
    source(paste(dir_code,"3_TemporalSumFunctions.R",sep=sep))
    
@@ -54,5 +77,7 @@
    setwd(dir_core)
    rm(list=ls())
    
-   
+## OK so you have regrid flag where you do the pentadal sum for both the regridded and normal data
+   # use that and edit the dekadal and monthly data
+   # consider using the regrid code to subset.
 

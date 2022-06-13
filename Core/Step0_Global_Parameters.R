@@ -7,7 +7,7 @@
 # If you update this file, please change the date
 # If you are brand new to R/R-Studio, read this first: https://psu-spatial.github.io/Geog364-2021/pg_Tut1_about.html 
 #================================================================================================================
-globalparams_lastupdated <- as.Date("2021-11-19")
+globalparams_lastupdated <- as.Date("2022-06-11")
 #runsetparamdate_DONOTDELETE
 
 #================================================================================================================
@@ -35,6 +35,14 @@ globalparams_lastupdated <- as.Date("2021-11-19")
     # Or on a single desktop/laptop  FALSE
     #---------------------------------------------------------------------------------
     PSUSuperComputer <- FALSE
+    
+    #---------------------------------------------------------------------------------
+    # Remote data?
+    # If you are storing the data elsewhere, add the address here
+    # It will still assume the code is in this folder structure.
+    # Else set to NA
+    #---------------------------------------------------------------------------------
+    RemoteData <- "/Volumes/Mac storage space/Work/Somalia/AXA-PSU-Somalia/Core/Data"
     
 #================================================================================================================
 # 2. SPATIAL - defaults are probably fine here
