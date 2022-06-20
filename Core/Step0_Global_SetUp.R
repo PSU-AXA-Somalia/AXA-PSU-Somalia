@@ -90,13 +90,13 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
    #---------------------------------------------------------------------------------
    # Run admin updates if it's Helen running this
    #---------------------------------------------------------------------------------
-    if(length((grep("hlg5155", dir_main))>0) | (length(grep("hgreatrex", dir_main))>0)){
-      if(verbose){message("Step 0: HELEN'S COMPUTER RUN. Running admin updates")}
-      functionloc <- "/Users/hlg5155/Dropbox/My Mac (E2-GEO-WKML011)/Documents/GitHub/My code/Greatrex.Functions/R"
-      functionstomove <- list.files(functionloc)
-      functionstomove <- functionstomove[grep(".R",toupper(functionstomove))]
-      for(n in 1:length(functionstomove)){ file.copy(from=paste(functionloc,functionstomove[n],sep=sep),to=paste(dir_code,"Global Functions",functionstomove[n],sep=sep),overwrite = TRUE)}
-    }
+    # if(length((grep("hlg5155", dir_main))>0) | (length(grep("hgreatrex", dir_main))>0)){
+    #   if(verbose){message("Step 0: HELEN'S COMPUTER RUN. Running admin updates")}
+    #   functionloc <- paste(dir_code,"Global Functions",sep=sep)
+    #   functionstomove <- list.files(functionloc)
+    #   functionstomove <- functionstomove[grep(".R",toupper(functionstomove))]
+    #   for(n in 1:length(functionstomove)){ file.copy(from=paste(functionloc,functionstomove[n],sep=sep),to=paste(dir_code,"Global Functions",functionstomove[n],sep=sep),overwrite = TRUE)}
+    # }
 
 #================================================================================================================
 # 2. LIBRARIES AND PACKAGES GENERAL
@@ -107,7 +107,6 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
   # Package names
   #---------------------------------------------------------------------------------
     cranpackages <- data.frame(Package="doParallel",Version="1.0.16") 
-    cranpackages <- rbind(cranpackages,c("exactextractr" ,"0.7.1" ))
     cranpackages <- rbind(cranpackages,c("foreach" ,      "1.5.1"  ))
     cranpackages <- rbind(cranpackages,c("leaflet"   ,    "2.0.4.1"))
     cranpackages <- rbind(cranpackages,c("matlab"     ,   "1.0.2"  ))
@@ -124,12 +123,12 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
     cranpackages <- rbind(cranpackages,c("terra"     ,    "1.4.10" ))
     cranpackages <- rbind(cranpackages,c("tmap"      ,    "3.3-2"  ))
     cranpackages <- rbind(cranpackages,c("usethis"   ,    "2.1.3"  ))
-    cranpackages <- rbind(cranpackages,c("gdalUtils" ,    "2.0.0"  ))
     cranpackages <- rbind(cranpackages,c("data.table" ,    "1.0.0"  ))
     cranpackages <- rbind(cranpackages,c("rgdal" ,    "1.0.0"  ))
     
     githubpackages <- data.frame(Github="hgreatrex",Package="Greatrex.Functions",Version="0.1.1")
     
+
     #---------------------------------------------------------------------------------
     # Install packages not yet installed
     #---------------------------------------------------------------------------------
@@ -150,6 +149,8 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
       remotes_installed_packages <- githubpackages$Package %in% rownames(installed.packages())
       if (any(remotes_installed_packages == FALSE)) {
         remotes_missing <- githubpackages[!remotes_installed_packages,]
+        remotes::install_github("gearslaboratory/gdalUtils")
+        remotes::install_github("isciences/exactextractr")
         
         for(n in 1:nrow(remotes_missing)){
           if(verbose){message(paste("           Installing package from Github:",paste(remotes_missing$Github[n],remotes_missing$Package[n],sep="/"),"\n"))}
@@ -244,7 +245,8 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
   if(verbose){message("        Loading packages")}
   out <- lapply(cranpackages$Package, function(x) suppressPackageStartupMessages(library(x, character.only = TRUE)))
   if(verbose){message(paste("           Package loaded:",cranpackages$Package,"\n"))}
-  
+  library(gdalUtils)
+  library(exactextractr)
   if(flag ==TRUE && use_github_repos == TRUE){
     if(verbose){message(paste("           Package loaded:",githubpackages$Package,"\n"))}
     out <- lapply(githubpackages$Package, function(x) suppressPackageStartupMessages(library(x, character.only = TRUE)))

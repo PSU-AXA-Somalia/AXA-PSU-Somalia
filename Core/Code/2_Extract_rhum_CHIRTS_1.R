@@ -70,7 +70,7 @@ yearfolders <- list.files(dir_data_in)
 yearfolders <- suppressWarnings(yearfolders[which(as.numeric(yearfolders) %in% 1980:2060)])
 
 # Now let's make a master list of input files and their source locations
-file_list.in <- paste(dir_data_in,list.files(dir_data_in,recursive=TRUE),sep=sep)
+file_list.in <- list.files(dir_data_in,recursive=TRUE, full.names = TRUE)
 file_list.in <- file_list.in[grep(".tif",file_list.in)]
 
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"))}
@@ -80,15 +80,18 @@ if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"
 #---------------------------------------------------------------------------------
 testval <- round(mean(length(file_list.in)))
 suppressWarnings(rm(Dataset_Example))
-Dataset_Example <- suppressWarnings(raster(file_list.in[testval], crs=4326))
-lat     <- coordinates(Dataset_Example)[,2]
-long    <- coordinates(Dataset_Example)[,1]
+Dataset_Example <- suppressWarnings(terra::rast(paste("/vsigzip/",(file_list.in[testval]),sep=sep)))
+suppressWarnings(crs(Dataset_Example) <- "EPSG: 4326")
+
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
+   long    <- crds(Dataset_Example)[,1]
    fwrite(list(long),paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
 }
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
+   lat     <- crds(Dataset_Example)[,2]
    fwrite(list(lat),paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE) 
 }  
+
 #---------------------------------------------------------------------------------
 # Extract dates from the files
 #---------------------------------------------------------------------------------
@@ -107,11 +110,17 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 #---------------------------------------------------------------------------------
 # CREATE CHIRTS FUNCTION
 #---------------------------------------------------------------------------------
-CreateCHIRTSRhum <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
+CreateCHIRTSRHum <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
-   file_loc.out  <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   # Create filename
    file_name.out <- paste(StemOut,"_",date.list[f],".tif",sep="")
+   year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
+   
+   if(!dir.exists(year_dir.out)){dir.create(year_dir.out)}
+   
+   file_loc.out <- paste(year_dir.out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   
    
    # Decide if you want to look at this file
    continue <- FALSE
@@ -131,16 +140,23 @@ CreateCHIRTSRhum <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list
       
       # Read in and change the projection
       # a <- Sys.time()
-      r <- suppressWarnings(rast(file_name.in))
-      crs(r) <- paste("EPSG:",globalcrs,sep="")
+      r <- suppressWarnings(terra::rast(paste("/vsigzip/",file_name.in,sep=sep)))
+      suppressWarnings(crs(r) <- paste("EPSG:",globalcrs,sep=""))
+      
       r[r < 0] <- NA
+      r[r > 999] <- NA
       #print(Sys.time() -a)
       
       if(length(unique(values(r)))<=1){
          return(paste("EMPTY",file_name.out))
       }else{
+         
          if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+
+         a <- Sys.time()
+         suppressMessages(suppressWarnings(terra::writeRaster(round(r,0), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         print(Sys.time() -a)
+         
          # Write regridded to file - to be added
          return(file_name.out)
       }
@@ -154,14 +170,14 @@ CreateCHIRTSRhum <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list
 #---------------------------------------------------------------------------------
 # ForEach
 a <- Sys.time()
-
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateCHIRTSRhum(f,dir_data_in,StemIn,dir_data_out,StemOut,
+
+myres <- foreach(f = 1:length(file_list.in)) %dopar%  CreateCHIRTSRHum(f,dir_data_in,StemIn,dir_data_out,StemOut,
                                                                     date.list,file_list.in,
                                                                     globalcrs,dataoverwrite)
 
-print(Sys.time() -a)
 
+if(verbose %in% c(TRUE,"Limited")){print(Sys.time() -a)}
 
 
 

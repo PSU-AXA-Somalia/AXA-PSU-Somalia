@@ -128,7 +128,13 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
-   file_loc.out  <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
+   
+   if(!dir.exists(year_dir.out)){dir.create(year_dir.out)}
+   
+   file_loc.out <- paste(year_dir.out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   
+   
    file_name.out <- paste(StemOut,"_",date.list[f],".tif",sep="")
    
    # Decide if you want to look at this file
@@ -156,7 +162,7 @@ CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
       }else{
          # Write to file
          if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         suppressMessages(suppressWarnings(terra::writeRaster(round(r,1), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
          a<-try(suppressMessages(suppressWarnings(file.remove(paste(file_loc.out,".aux.json",sep="")))))
          return(file_name.out)
       }
@@ -172,14 +178,15 @@ CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
 a <- Sys.time()
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
 
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateTAMSAT(f,dir_data_in,StemIn,dir_data_out,StemOut,
+myres <- foreach(f = 1:length(file_list.in))%dopar%  CreateTAMSAT(f,dir_data_in,StemIn,dir_data_out,StemOut,
                                                                 date.list,file_list.in,
                                                                 globalcrs,dataoverwrite)
 
 print(Sys.time() -a)
 
+if(verbose==TRUE){print("\n     Deleting raw unzipped files")}
 
-
+file.remove(paste(TAMSATdatadir,list.files(TAMSATdatadir),sep=sep))
 
 
 

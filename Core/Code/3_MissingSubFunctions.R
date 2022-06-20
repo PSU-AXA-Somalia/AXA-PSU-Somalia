@@ -64,7 +64,7 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
       }
       
       r <- suppressWarnings(rast(file.name))
-      crs(r) <- paste("EPSG:",globalcrs,sep="")
+      suppressWarnings(crs(r) <- paste("EPSG:",globalcrs,sep=""))
       
       if(tolower(family) %in% c("tmin" ,"tmax")){
          r[r < -90] <- NA
@@ -80,11 +80,15 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
          continue <- TRUE
       }else{
          # if there is data, go ahead and save
-         file_loc.out <- paste(dir_data_remote_BGeoTif_daily,dataset,
+         
+         
+         file_loc.out <- paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),
                                paste(dataset,"_",missingdate,".tif",sep=""),sep=sep) 
-         
-         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
-         
+         if(family %in% c("rain","tmin","tmax","rhum")){
+            suppressMessages(suppressWarnings(terra::writeRaster(round(r,1), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         }else{
+            suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         }
          a<-try(suppressMessages(suppressWarnings(file.remove(paste(file_loc.out,".aux.xml",sep="")))))
          missingdays[d,"missing"] <- FALSE
          missingdays[d,"Sat"] <- paste(Daily_datasetlist$Stem[n_data],"_",
@@ -99,7 +103,7 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
    # Otherwise fill. Could also use the TAMSAT/CHIRPS fill approach.
    #---------------------------------------------------------------------
    if(continue==TRUE){
-
+      if(verbose %in% c(TRUE,"Limited")){message(paste("       Filling with bad fill"))}
       #---------------------------------------------------------------------
       # Try taking the before/after average. You can speed up with Terra, but
       # rubbish fill
@@ -108,14 +112,14 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
       flag.next <- FALSE
       
       # Look for the day before
-      before <- paste(dir_data_remote_BGeoTif_daily,dataset,paste(dataset,"_",(missingdate-1),".tif",sep=""),sep=sep)
+      before <- paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),paste(dataset,"_",(missingdate-1),".tif",sep=""),sep=sep)
       if(file.exists(before)){
          r.prev <- suppressWarnings(raster(before))
          flag.prev <- TRUE
       }
       
       # Look for the day after
-      after <- paste(dir_data_remote_BGeoTif_daily,dataset,paste(dataset,"_",(missingdate+1),".tif",sep=""),sep=sep)
+      after <- paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),paste(dataset,"_",(missingdate+1),".tif",sep=""),sep=sep)
       if(file.exists(after)){
          r.next <- suppressWarnings(raster(after))
          flag.next <- TRUE
@@ -125,8 +129,12 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
       if((flag.prev==TRUE)&(flag.next==TRUE)){
          r <- calc(stack(r.prev,r.next),mean,na.rm=TRUE)
          fname <- paste(dataset,"_",missingdate,".tif",sep="")
-         raster::writeRaster(r,paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),format="GTiff",overwrite=TRUE)
-         a<-try(suppressMessages(suppressWarnings(file.remove(paste(paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),".aux.xml",sep="")))))
+         if(family %in% c("rain","tmin","tmax","rhum")){
+            raster::writeRaster(round(r,1),paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         }else{
+            raster::writeRaster(r,paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         }
+            a<-try(suppressMessages(suppressWarnings(file.remove(paste(paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),".aux.xml",sep="")))))
          if(verbose %in% c(TRUE,"Limited")){message( "       Filling using average of prev and next")}
          return("Prev-Next")
       }
@@ -134,8 +142,12 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
       # If one of them is true, take the previous day
       if(flag.prev==TRUE){
          fname <- paste(dataset,"_",missingdate,".tif",sep="")
-         raster::writeRaster(r.prev,paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),format="GTiff",overwrite=TRUE)
-         a<-try(suppressMessages(suppressWarnings(file.remove(paste(paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),".aux.xml",sep="")))))
+         if(family %in% c("rain","tmin","tmax","rhum")){
+            raster::writeRaster(round(r.prev,1),paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         }else{
+            raster::writeRaster(r.prev,paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         }         
+         a<-try(suppressMessages(suppressWarnings(file.remove(paste(paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),".aux.xml",sep="")))))
          if(verbose %in% c(TRUE,"Limited")){message( "       Filling using previous day")}
          return("Prev")
       }
@@ -143,10 +155,13 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
       if(flag.next==TRUE){
          if(verbose %in% c(TRUE,"Limited")){message( "       Filling using next day")}
          fname <- paste(dataset,"_",missingdate,".tif",sep="")
-         raster::writeRaster(r.next,
-                             paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),format="GTiff",overwrite=TRUE)
+         if(family %in% c("rain","tmin","tmax","rhum")){
+            raster::writeRaster(round(r.next,1),paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         }else{
+            raster::writeRaster(r.next,paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),format="GTiff",overwrite=TRUE)
+         } 
          a<-try(suppressMessages(suppressWarnings(file.remove(paste(
-            paste(dir_data_remote_BGeoTif_daily,dataset,fname,sep=sep),".aux.xml",sep="")))))
+            paste(dir_data_remote_BGeoTif_daily,dataset,format.Date(missingdate,"%Y"),fname,sep=sep),".aux.xml",sep="")))))
          
          return("Next")
       }

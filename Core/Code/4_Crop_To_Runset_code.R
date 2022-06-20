@@ -4,10 +4,10 @@
 #---------------------------------------------------------------------------------
 # Set up file structures
 #---------------------------------------------------------------------------------
- products_daily  <-  list.files(dir_data_remote_BGeoTif_daily_regrid_10,pattern="_")
- products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="_")
- products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_")
- products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_")
+ products_daily  <-  list.files(dir_data_remote_BGeoTif_daily_regrid_10,pattern="_",recursive=TRUE)
+ products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="_",recursive=TRUE)
+ products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_",recursive=TRUE)
+ products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_",recursive=TRUE)
 
  if("pentad_README" %in% products_pentad) { 
    products_pentad <- products_pentad[-which(products_daily %in% "pentad_README")]
@@ -507,7 +507,7 @@ if(movedata){
       
     }else{
       r <- raster::raster(paste(indirectory,infile,sep=sep))
-      writeRaster(crop(r,newbox), filename=outputfile, format="GTiff", overwrite=Overwrite)
+      writeRaster(round(crop(r,newbox),1), filename=outputfile, format="GTiff", overwrite=Overwrite)
     }  
     return(infile)
   }
@@ -527,7 +527,7 @@ if(movedata){
       
       if(verbose){message(paste("     ",products_daily[p] ))}
       indirectory <- paste(dir_data_remote_BGeoTif_daily,products_daily[p],sep=sep)
-      productfiles <- list.files(indirectory)
+      productfiles <- list.files(indirectory,recursive=TRUE)
       productfiles <- productfiles[(grep(".tif",productfiles))]
       outdirectory <- paste(dir_data_remote_BGeoTif_daily_runset,products_daily[p],sep=sep)
       Overwrite=FALSE
@@ -555,7 +555,7 @@ if(movedata){
       
       if(verbose){message(paste("     ",products_pentad[p] ))}
       indirectory <- paste(dir_data_remote_BGeoTif_pentad,products_pentad[p],sep=sep)
-      productfiles <- list.files(indirectory)
+      productfiles <- list.files(indirectory,recursive=TRUE)
       productfiles <- productfiles[(grep(".tif",productfiles))]
       
       outdirectory <- paste(dir_data_remote_BGeoTif_pentad_runset,products_pentad[p],sep=sep)
@@ -584,7 +584,7 @@ if(movedata){
       
       if(verbose){message(paste("     ",products_dekad[p] ))}
       indirectory <- paste(dir_data_remote_BGeoTif_dekad,products_dekad[p],sep=sep)
-      productfiles <- list.files(indirectory)
+      productfiles <- list.files(indirectory,recursive=TRUE)
       productfiles <- productfiles[(grep(".tif",productfiles))]
       outdirectory <- paste(dir_data_remote_BGeoTif_dekad_runset,products_dekad[p],sep=sep)
       
@@ -614,7 +614,7 @@ if(movedata){
       if(verbose){message(paste("     ",products_month[p] ))}
       
       indirectory <- paste(dir_data_remote_BGeoTif_month,products_month[p],sep=sep)
-      productfiles <- list.files(indirectory)
+      productfiles <- list.files(indirectory,recursive=TRUE)
       productfiles <- productfiles[(grep(".tif",productfiles))]
       
       outdirectory <- paste(dir_data_remote_BGeoTif_month_runset,products_month[p],sep=sep)

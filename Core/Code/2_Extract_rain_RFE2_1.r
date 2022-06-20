@@ -99,7 +99,13 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
-   file_loc.out  <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   
+   year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
+   
+   if(!dir.exists(year_dir.out)){dir.create(year_dir.out)}
+   
+   file_loc.out <- paste(year_dir.out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   
    file_name.out <- paste(StemOut,"_",date.list[f],".tif",sep="")
    
    # Decide if you want to look at this file
@@ -136,7 +142,7 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
             
             # Write to file
             #if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-            suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+            suppressMessages(suppressWarnings(terra::writeRaster(round(r,1), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
             
             # Write regridded to file - to be added
             suppressWarnings(suppressMessages(file.remove(newlyunzipped)))
@@ -158,26 +164,10 @@ CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
 # ForEach
 a <- Sys.time()
 
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,
+myres <- foreach(f = 1:length(file_list.in)) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,
                                                               StemOut,date.list,file_list.in,globalcrs,
                                                               dataoverwrite)
 
 
 print(Sys.time() -a)
-
-
-
-#  file.chunks <- split(dates,dates$Year)
-#  for(time in 1:length(file.chunks)){
-#    if(verbose){message(paste("       Year:",file.chunks[[time]]$Year[1]))}
-#    myres <- foreach(f = 1:length(file.chunks[[time]])) %dopar%  CreateRFE2(f,dir_data_in,StemIn,dir_data_out,StemOut,
-#                                                                             date.list=file.chunks[[time]]$Date,
-#                                                                             file_list.in=file.chunks[[time]]$file_list.in,
-#                                                                             globalcrs,dataoverwrite)
-#  }
-
-
-
-
-
 

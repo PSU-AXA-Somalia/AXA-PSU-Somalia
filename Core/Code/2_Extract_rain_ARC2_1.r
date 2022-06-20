@@ -107,7 +107,12 @@ CreateARC2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
    
    # Create filename
    file_name.out <- paste(StemOut,"_",date.list[f],".tif",sep="")
-   file_loc.out <- paste(dir_data_out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
+   
+   if(!dir.exists(year_dir.out)){dir.create(year_dir.out)}
+   
+   file_loc.out <- paste(year_dir.out,paste(StemOut,"_",date.list[f],".tif",sep=""),sep=sep) 
+   
    
    # Decide if you want to look at this file
    continue <- FALSE
@@ -143,7 +148,7 @@ CreateARC2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
          }else{
             # Write to file
             #if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-            suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+            suppressMessages(suppressWarnings(terra::writeRaster(round(r,1), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
             suppressWarnings(suppressMessages(file.remove(newlyunzipped)))
             return(file_name.out)
          }
@@ -164,7 +169,7 @@ CreateARC2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_
 a <- Sys.time()
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
 
-myres <- foreach(f = 1:length(date.list)) %dopar%  CreateARC2(f,dir_data_in,StemIn,dir_data_out,StemOut,
+myres <- foreach(f = 1:length(file_list.in)) %dopar%  CreateARC2(f,dir_data_in,StemIn,dir_data_out,StemOut,
                                                               date.list,file_list.in,
                                                               globalcrs,dataoverwrite)
 print(Sys.time() -a)

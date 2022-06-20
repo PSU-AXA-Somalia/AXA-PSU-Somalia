@@ -6,12 +6,9 @@ Data_Meta <- read.csv("Step0_Datasets.csv")
 names(Data_Meta)[3] <- "Satellite"
 
 Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
-
-
 Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
 Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
 Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
-
 
 
 #---------------------------------------------------------------------------------
@@ -40,8 +37,18 @@ for(n_data in 1:nrow(Daily_datasetlist)){
    #-----------------------------------------------------------------------------
    # Get files in the GeoFolder and get the dates from them
    #-----------------------------------------------------------------------------
-   data_available <- list.files(geo_stem)
+   data_available <- list.files(geo_stem,recursive=TRUE)
+   # remove any spurious tif/aux files
+   suppressWarnings(suppressMessages(file.remove(list.files(geo_stem,recursive=TRUE,full.names=TRUE,include.dirs =TRUE)[
+                                                                          grep("tif.aux",list.files(geo_stem,recursive=TRUE,full.names=TRUE,include.dirs =TRUE))])))
+   suppressWarnings(suppressMessages(file.remove(list.files(geo_stem,recursive=TRUE,full.names=TRUE,include.dirs =TRUE)[
+      grep(".aux.json",list.files(geo_stem,recursive=TRUE,full.names=TRUE,include.dirs =TRUE))])))
+
+   data_available <- list.files(geo_stem,recursive=TRUE)
+   data_available <- data_available[grep(".tif",data_available)]
    
+   
+      
    date.list  <-  data.frame(Date=as.Date(substr(data_available,nchar(data_available)-13, nchar(data_available)-4),format="%Y-%m-%d"),
                              Sat=data_available)
    date.list$missing <- FALSE
@@ -67,9 +74,10 @@ for(n_data in 1:nrow(Daily_datasetlist)){
    }
    
    if(!(is.na(satenddate))&enddate>as.Date(satenddate)){
-      enddate <- satenddate
+      enddate <- as.Date(satenddate)
    }
-   
+   enddate <- as.Date(enddate)
+   startdate <- as.Date(startdate)
    #-----------------------------------------------------------------------------
    # Merge and check
    #-----------------------------------------------------------------------------

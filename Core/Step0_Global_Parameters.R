@@ -27,7 +27,7 @@ globalparams_lastupdated <- as.Date("2022-06-11")
    #
    # If your R version is struggling to install updates, try turning auto_update_package <- FALSE
    #---------------------------------------------------------------------------------
-    use_github_repos     <- FALSE    
+    use_github_repos     <- TRUE    
     auto_update_packages <- FALSE
     
     #---------------------------------------------------------------------------------
