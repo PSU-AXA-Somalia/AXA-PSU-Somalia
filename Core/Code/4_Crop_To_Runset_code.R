@@ -1,213 +1,249 @@
 
 # this code is linked to Step2a_Crop_To_Runset.R in the main code folder.
 
-#---------------------------------------------------------------------------------
-# Set up file structures
-#---------------------------------------------------------------------------------
- products_daily  <-  list.files(dir_data_remote_BGeoTif_daily_regrid_10,pattern="_",recursive=TRUE)
- products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="_",recursive=TRUE)
- products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_",recursive=TRUE)
- products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_",recursive=TRUE)
 
- if("pentad_README" %in% products_pentad) { 
-   products_pentad <- products_pentad[-which(products_daily %in% "pentad_README")]
- }
- 
- 
-#---------------------------------------------------------------------------------
-# Create Runset folder name
-#---------------------------------------------------------------------------------
- if(is.na(Runset)){
-  if(Option == 1){
-    Runset <- paste("BOX",round(MinLong,3),round(MaxLong,3),
-                    round(MinLat,3),round(MaxLat,3),sep="_") 
-  }else{
-    if(is.na(column_value)){
-      Runset <- paste(Shapefile.Name,croptype,sep="_")
-    }else{
-      Runset <- paste(column_value,croptype,sep="_")
-    }
-  }
- }
+#=================================================================================
+# Set up meta data
+#=================================================================================
 
-
-#---------------------------------------------------------------------------------
-# And create main folder
-#---------------------------------------------------------------------------------
- dir_runset     <- paste(dir_main,"Runset",Runset,sep=sep)
- conditionalcreate(dir_runset)
- if(verbose){message(paste("Setting up file structures in",dir_runset))}
-
-#---------------------------------------------------------------------------------
-# Check that the output folders don't have special names
-#---------------------------------------------------------------------------------
- if(is.na(override_analysisfoldername==FALSE)){
-   dir_analysis_raw    <- paste(dir_runset,runset_foldername_rawoutput,sep=sep)
- }else{
-   if(verbose){message(paste("Overriding output folder names"))}
-   dir_analysis_raw    <- paste(dir_runset,override_analysisfoldername,sep=sep)
-   runset_foldername_rawoutput <- override_analysisfoldername
- } 
-
- if(is.na(override_visualisationfoldername==FALSE)){
-   dir_analysis_vis    <- paste(dir_runset,runset_foldername_visualise,sep=sep)
- }else{
-   if(verbose){message(paste("Overriding visualisation folder names"))}
-   dir_analysis_vis    <- paste(dir_runset,override_visualisationfoldername,sep=sep)
-   runset_foldername_visualise <-  override_visualisationfoldername 
- } 
-
- if(verbose){message("  1. Creating runset parameters, saved as Step0_Runset_Parameters.R")}
-
-#---------------------------------------------------------------------------------
-# Read in and store runset parameters, editing as necessary
-#---------------------------------------------------------------------------------
-LocalParamsWrapper <- readLines("Step0_Global_Parameters.R")
-
-# Show what runset it is
- LocalParamsWrapper[[3]] <- paste("# RUNSET PARAMETERS, Runset name:",Runset)
-
-# Add in date updated
-LocalParmsLine3 <- grep("runsetparamdate_DONOTDELETE",LocalParamsWrapper)
-LocalParamsWrapper[LocalParmsLine3] <- paste("runsetparams_lastupdated <- as.Date(\"",Sys.Date(),"\")",sep="")
-
-# Add in new setupfile updated
-LocalParmsLine4 <- grep("Step0_Global_SetUp",LocalParamsWrapper)
-LocalParamsWrapper[LocalParmsLine4] <- str_replace(LocalParamsWrapper[LocalParmsLine4],"Step0_Global_SetUp","Step0_Runset_SetUp")
-
-
-# write out full thing  
-write_lines(LocalParamsWrapper[[1]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep))
-for (m in 2:length(LocalParamsWrapper)){
-   write_lines(LocalParamsWrapper[[m]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep),append=TRUE)
-}  
-
-
-#---------------------------------------------------------------------------------
-# Read in and store runset setup, editing as necessary
-#---------------------------------------------------------------------------------
-LocalParams        <- readLines("Step0_Global_SetUp.R")
-
-# Switch core to runset name
-projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
-newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
-
-LocalParmsLineproj <- grep(projfile,LocalParams)
-for(L in 1:length(LocalParmsLineproj)){
-   LocalParams[LocalParmsLineproj[L]] <- str_replace(LocalParams[LocalParmsLine4],projfile,newprojfile)
-}
-
-LocalParmsLineproj <- grep("dir_main",LocalParams)
-LocalParams[LocalParmsLineproj[1]] <- "  dir_main <- substr(getwd(),start=1,stop=nchar(getwd()))"
-
-
- # Switch core to runset name
-  LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <- dir_main,", "\"","../../Core", "\"",",sep=sep" ,sep="")
-  LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- dir_main,", "\"","../Runset", "\"",",sep=sep" ,sep="")
-  
- # Makr runset output folders
-  LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
-  LocalParams[LocalParmsLine1] <- paste("dir_analysis_raw <- paste(dir_main, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
-
-  LocalParmsLine2 <- grep("runset_foldername_visualise",LocalParams)
-  LocalParams[LocalParmsLine2] <- paste("dir_analysis_vis <- paste(dir_main, \"",runset_foldername_visualise," \",sep=sep)",sep="")
-
-  
-# write out full thing  
-write_lines(LocalParams[[1]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep))
-for (m in 2:length(LocalParams)){
-  write_lines(LocalParams[[m]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep),append=TRUE)
-}  
-
-
-#---------------------------------------------------------------------------------
-# Move the existing analysis folder if it exists and you want to save
-# ONLY DOES THIS IF THERE IS DATA!
-#---------------------------------------------------------------------------------
-if(SaveAnalysis == TRUE){
-  if(verbose){message("  2. Looking for old analysis to save from deletion")}
-  if(dir.exists(dir_runset)){
-    # IF there is analysis already done, copy it
-    if(length(list.files(dir_analysis_raw))>0){
-      newfolder <- paste(dir_analysis_raw,"OLD",Sys.Date(),sep="_")
-      nn=1
-      while(dir.exists(newfolder)){
-        newfolder <- paste(newfolder,n,sep="_")
-        nn=nn+1
-        if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
-        if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+   #---------------------------------------------------------------------------------
+   # Create Runset folder name
+   #---------------------------------------------------------------------------------
+   if(is.na(Runset)){
+      if(Option == 1){
+         Runset <- paste("BOX",round(MinLong,3),round(MaxLong,3),
+                      round(MinLat,3),round(MaxLat,3),sep="_") 
+      }else{
+         if(is.na(column_value)){
+            Runset <- paste(Shapefile.Name,croptype,sep="_")
+         }else{
+               Runset <- paste(column_value,croptype,sep="_")
+         }
       }
-      if(verbose){message(paste("     a) Old raw output found, moving to subfolder:",newfolder))}
-      file.rename(dir_analysis_raw,newfolder)
-    }
-    if(length(list.files(dir_analysis_vis))>0){
-      newfolder <- paste(dir_analysis_vis,"OLD",Sys.Date(),sep="_")
-      nn=1
-      while(dir.exists(newfolder)){
-        newfolder <- paste(newfolder,n,sep="_")
-        nn=nn+1
-        if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
-        if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+   }
+
+   #---------------------------------------------------------------------------------
+   # And create main folder
+   #---------------------------------------------------------------------------------
+   if(verbose){message(paste("Setting up file structures in",dir_runset))}
+   dir_runset     <- paste(dir_main,"Runset",Runset,sep=sep)
+   conditionalcreate(dir_runset)
+   
+   #---------------------------------------------------------------------------------
+   # Check that the output folders don't have special names
+   #---------------------------------------------------------------------------------
+   if(is.na(override_analysisfoldername==FALSE)){
+      dir_analysis_raw    <- paste(dir_runset,runset_foldername_rawoutput,sep=sep)
+   }else{
+      if(verbose){message(paste("Overriding output folder names"))}
+      dir_analysis_raw    <- paste(dir_runset,override_analysisfoldername,sep=sep)
+      runset_foldername_rawoutput <- override_analysisfoldername
+   } 
+   
+   if(is.na(override_visualisationfoldername==FALSE)){
+      dir_analysis_vis    <- paste(dir_runset,runset_foldername_visualise,sep=sep)
+   }else{
+      if(verbose){message(paste("Overriding visualisation folder names"))}
+      dir_analysis_vis    <- paste(dir_runset,override_visualisationfoldername,sep=sep)
+      runset_foldername_visualise <-  override_visualisationfoldername 
+   } 
+   
+#=================================================================================
+# Create runset parameters   
+#=================================================================================
+   if(verbose){message("  1. Creating runset parameters, saved as Step0_Runset_Parameters.R")}
+   
+   #---------------------------------------------------------------------------------
+   # Read in and store runset parameters, editing as necessary
+   #---------------------------------------------------------------------------------
+   LocalParamsWrapper <- readLines("Step0_Global_Parameters.R")
+   
+   # Show what runset it is
+   LocalParamsWrapper[[3]] <- paste("# RUNSET PARAMETERS, Runset name:",Runset)
+   
+   # Add in date updated
+   LocalParmsLine3 <- grep("runsetparamdate_DONOTDELETE",LocalParamsWrapper)
+   LocalParamsWrapper[LocalParmsLine3] <- paste("runsetparams_lastupdated <- as.Date(\"",Sys.Date(),"\")",sep="")
+   
+   # Add in new setupfile updated
+   LocalParmsLine4 <- grep("Step0_Global_SetUp",LocalParamsWrapper)
+   LocalParamsWrapper[LocalParmsLine4] <- str_replace(LocalParamsWrapper[LocalParmsLine4],"Step0_Global_SetUp","Step0_Runset_SetUp")
+   
+   # write out full thing  
+   write_lines(LocalParamsWrapper[[1]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep))
+   for (m in 2:length(LocalParamsWrapper)){
+      write_lines(LocalParamsWrapper[[m]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep),append=TRUE)
+   }  
+   
+   #---------------------------------------------------------------------------------
+   # Read in and store runset setup, editing as necessary
+   #---------------------------------------------------------------------------------
+   LocalParams        <- readLines("Step0_Global_SetUp.R")
+   
+   # Switch core to runset name
+   projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
+   newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
+   
+   LocalParmsLineproj <- grep(projfile,LocalParams)
+   for(L in 1:length(LocalParmsLineproj)){
+      LocalParams[LocalParmsLineproj[L]] <- str_replace(LocalParams[LocalParmsLine4],projfile,newprojfile)
+   }
+   
+   LocalParmsLineproj <- grep("dir_main",LocalParams)
+   LocalParams[LocalParmsLineproj[1]] <- "  dir_main <- substr(getwd(),start=1,stop=nchar(getwd()))"
+   
+   
+   # Switch core to runset name
+   LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <- dir_main,", "\"","../../Core", "\"",",sep=sep" ,sep="")
+   LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- dir_main,", "\"","../Runset", "\"",",sep=sep" ,sep="")
+   
+   # Makr runset output folders
+   LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
+   LocalParams[LocalParmsLine1] <- paste("dir_analysis_raw <- paste(dir_main, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
+   
+   LocalParmsLine2 <- grep("runset_foldername_visualise",LocalParams)
+   LocalParams[LocalParmsLine2] <- paste("dir_analysis_vis <- paste(dir_main, \"",runset_foldername_visualise," \",sep=sep)",sep="")
+   
+   
+   # write out full thing  
+   write_lines(LocalParams[[1]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep))
+   for (m in 2:length(LocalParams)){
+      write_lines(LocalParams[[m]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep),append=TRUE)
+   }  
+   
+   #---------------------------------------------------------------------------------
+   # Move the existing analysis folder if it exists and you want to save
+   # ONLY DOES THIS IF THERE IS DATA!
+   #---------------------------------------------------------------------------------
+   if(SaveAnalysis == TRUE){
+      if(verbose){message("  2. Looking for old analysis to save from deletion")}
+      if(dir.exists(dir_runset)){
+         # IF there is analysis already done, copy it
+         if(length(list.files(dir_analysis_raw))>0){
+            newfolder <- paste(dir_analysis_raw,"OLD",Sys.Date(),sep="_")
+            nn=1
+            while(dir.exists(newfolder)){
+               newfolder <- paste(newfolder,n,sep="_")
+               nn=nn+1
+               if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
+               if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+            }
+            if(verbose){message(paste("     a) Old raw output found, moving to subfolder:",newfolder))}
+            file.rename(dir_analysis_raw,newfolder)
+         }
+         if(length(list.files(dir_analysis_vis))>0){
+            newfolder <- paste(dir_analysis_vis,"OLD",Sys.Date(),sep="_")
+            nn=1
+            while(dir.exists(newfolder)){
+               newfolder <- paste(newfolder,n,sep="_")
+               nn=nn+1
+               if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
+               if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+            }
+            if(verbose){message(paste("     a) Old visualisation found, moving to subfolder:",newfolder))}
+            file.rename(dir_analysis_vis,newfolder)
+         }        
+      }  
+   }
+   
+   
+   
+#=================================================================================
+# Create runset parameters   
+#=================================================================================
+   #---------------------------------------------------------------------------------
+   # Create the folder, then move over the directory structure
+   #---------------------------------------------------------------------------------
+   if(verbose){message("  3. Creating subfolders")}
+   
+   conditionalcreate(dir_analysis_raw)
+   conditionalcreate(dir_analysis_vis)
+   
+   #---------------------------------------------------------------------------------
+   # Get directory names?
+   #---------------------------------------------------------------------------------
+   alldirs <- ls()
+   alldirs <- alldirs[ grep("dir_",alldirs)]
+   alldirs <- alldirs[which(!(alldirs %in% c("dir_main","dir_core","dir_data",
+                                             "dir_runset","dir_data_remote_ARaw",
+                                             "dir_data_remote_ARaw_missing")))]
+   alldirs <- sort(alldirs)
+   
+   #---------------------------------------------------------------------------------
+   # Create data folder, in case main one is held separately
+   #---------------------------------------------------------------------------------
+   if(tolower(datadir_loc) %in% "auto" ){
+      dirnew <- eval(parse(text = "dir_code"))
+      dir_data_runset <- str_replace(dirnew,"Core",paste("Runset",Runset,sep=sep))
+      dir_data_runset <- str_replace(dir_data_runset,"Code",paste("Data",Runset,sep=sep))
+      conditionalcreate(dir_data_runset)
+   }else{
+      datadir_loc <- gsub("/$", "", datadir_loc)
+      dir_data_runset <- paste(datadir_loc,"Data",sep=sep)
+      conditionalcreate(dir_data_runset)
+   }
+   
+   #---------------------------------------------------------------------------------
+   # List all the subfolders in the data 
+   #---------------------------------------------------------------------------------
+   dir_data_subfolders <- list.dirs(dir_data,recursive=TRUE)[- 1]   
+ 
+     
+    
+   #---------------------------------------------------------------------------------
+   # List files in data folder
+   #---------------------------------------------------------------------------------
+   products_daily  <-  list.files(dir_data_remote_BGeoTif_daily_regrid_10,pattern="_",recursive=TRUE)
+   products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="_",recursive=TRUE)
+   products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="_",recursive=TRUE)
+   products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="_",recursive=TRUE)
+
+   #---------------------------------------------------------------------------------
+   # Remove any readmes
+   #---------------------------------------------------------------------------------
+   if("pentad_README" %in% products_pentad) { 
+      products_pentad <- products_pentad[-which(products_daily %in% "pentad_README")]
+   }
+
+   #---------------------------------------------------------------------------------
+   # For each directory
+   #---------------------------------------------------------------------------------
+   fin <- length(alldirs)
+   for(counter in 1:fin){
+      #print(counter)
+      dirnew <- eval(parse(text = alldirs[counter]))
+      dirout <- str_replace(dirnew,"Core",paste("Runset",Runset,sep=sep))
+      conditionalcreate(dirout)
+   }   
+      if(alldirs[counter] %in% "dir_data_remote_BGeoTif_daily"){
+         for(p in products_daily){
+            dirinprod <- paste(dir_data_remote_BGeoTif_daily,p,sep=sep)
+            diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
+            suppressWarnings(conditionalcreate(diroutprod))
+         }
       }
-      if(verbose){message(paste("     a) Old visualisation found, moving to subfolder:",newfolder))}
-      file.rename(dir_analysis_vis,newfolder)
-    }        
-  }  
-}
-
-#---------------------------------------------------------------------------------
-# And create the folder, then move over the directory structure
-#---------------------------------------------------------------------------------
-if(verbose){message("  3. Creating subfolders")}
-
-conditionalcreate(dir_analysis_raw)
-conditionalcreate(dir_analysis_vis)
-
-alldirs <- ls()
-alldirs <- alldirs[ grep("dir_",alldirs)]
-alldirs <- alldirs[-grep("dir_main",alldirs)]
-alldirs <- alldirs[-grep("dir_core",alldirs)]
-alldirs <- alldirs[-grep("dir_runset",alldirs)]
-alldirs <- alldirs[-grep("dir_data_remote_ARaw",alldirs)]
-alldirs <- sort(alldirs)
-
-fin <- length(alldirs)
-for(dir_count in 1:fin){
-  #print(dir_count)
-  dirnew <- eval(parse(text = alldirs[dir_count]))
-  dirout <- str_replace(dirnew,"Core",paste("Runset",Runset,sep=sep))
-  conditionalcreate(dirout)
-  
-  if(alldirs[dir_count] %in% "dir_data_remote_BGeoTif_daily"){
-    for(p in products_daily){
-      dirinprod <- paste(dir_data_remote_BGeoTif_daily,p,sep=sep)
-      diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
-      suppressWarnings(conditionalcreate(diroutprod))
-    }
-  }
-  if(alldirs[dir_count] %in% "dir_data_remote_BGeoTif_pentad"){
-    for(p in products_pentad){
-      dirinprod <- paste(dir_data_remote_BGeoTif_pentad,p,sep=sep)
-      diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
-      suppressWarnings(conditionalcreate(diroutprod))
-    }
-  }
-  if(alldirs[dir_count] %in% "dir_data_remote_BGeoTif_dekad"){
-    for(p in products_dekad){
-      dirinprod <- paste(dir_data_remote_BGeoTif_dekad,p,sep=sep)
-      diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
-      suppressWarnings(conditionalcreate(diroutprod))
-    }
-  }
-  if(alldirs[dir_count] %in% "dir_data_remote_BGeoTif_month"){
-    for(p in products_month){
-      dirinprod <- paste(dir_data_remote_BGeoTif_month,p,sep=sep)
-      diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
-      suppressWarnings(conditionalcreate(diroutprod))
-    }
-  }
-}
-
+      if(alldirs[counter] %in% "dir_data_remote_BGeoTif_pentad"){
+         for(p in products_pentad){
+            dirinprod <- paste(dir_data_remote_BGeoTif_pentad,p,sep=sep)
+            diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
+            suppressWarnings(conditionalcreate(diroutprod))
+         }
+      }
+      if(alldirs[counter] %in% "dir_data_remote_BGeoTif_dekad"){
+         for(p in products_dekad){
+            dirinprod <- paste(dir_data_remote_BGeoTif_dekad,p,sep=sep)
+            diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
+            suppressWarnings(conditionalcreate(diroutprod))
+         }
+      }
+      if(alldirs[counter] %in% "dir_data_remote_BGeoTif_month"){
+         for(p in products_month){
+            dirinprod <- paste(dir_data_remote_BGeoTif_month,p,sep=sep)
+            diroutprod <- str_replace(dirinprod,"Core",paste("Runset",Runset,sep=sep))
+            suppressWarnings(conditionalcreate(diroutprod))
+         }
+      }
+   
 #---------------------------------------------------------------------------------
 # and set up runset versions of the main directories
 #---------------------------------------------------------------------------------
@@ -220,6 +256,9 @@ dir_data_remote_BGeoTif_daily_runset  <- str_replace(dir_data_remote_BGeoTif_dai
 dir_data_remote_BGeoTif_pentad_runset <- str_replace(dir_data_remote_BGeoTif_pentad_runset,"Core",paste("Runset",Runset,sep=sep))
 dir_data_remote_BGeoTif_dekad_runset  <- str_replace(dir_data_remote_BGeoTif_dekad_runset,"Core",paste("Runset",Runset,sep=sep))
 dir_data_remote_BGeoTif_month_runset  <- str_replace(dir_data_remote_BGeoTif_month_runset,"Core",paste("Runset",Runset,sep=sep))
+
+
+   
 
 
 if(verbose){message("  4. Loading global spatial meta data")}
@@ -512,6 +551,24 @@ if(movedata){
     return(infile)
   }
   
+  #---------------------------------------------------------------------------------
+  # Function to get additional CHIRPS data
+  # IMERG and ESI
+  # First, make a new subfolder and product
+  #---------------------------------------------------------------------------------
+  library(chirps)
+  imerg_dir <- "~/Desktop/CHIRPS/UCSB_IMERG"
+  conditionalcreate(imerg_dir)
+  imerg_start <- as.Date("2017-12-15")
+  imerg_end <- as.Date("2017-12-31")#Sys.Date()-90
+  chgproduct_years <- seq(format.Date(imerg_start,"%Y"),format.Date(imerg_end,"%Y"))
+  chgproduct_dates <- seq(imerg_start,imerg_end,by="d")
+  chgproduct_template<- crop(samplefile,newbox)
+  for(y in 1:length(chgproduct_years)){
+     chgproduct_datestoget <- chgproduct_dates[which(format.Date(chgproduct_dates,"%Y")%in% chgproduct_years[y])]
+     test <- get_imerg.sf(chgproduct_template,c(paste(min(chgproduct_datestoget)),
+                        paste(max(chgproduct_datestoget))))
+  }
   
   #---------------------------------------------------------------------------------
   # Now apply it using foreach - and run

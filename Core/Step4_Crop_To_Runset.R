@@ -17,7 +17,7 @@
   #  What do you want to call your runset? E.g. what should the folder be called?
   #  If you want to auto-name from the shapefile/bounding box, then put as NA
   #---------------------------------------------------------------------------------------
-   Runset <- "South_Subset"
+   Runset <- "South_Subset_new"
  
   #---------------------------------------------------------------------------------------
   # SaveAnalysis 
@@ -41,6 +41,13 @@
   #---------------------------------------------------------------------------------------
    override_analysisfoldername <- NA
    override_visualisationfoldername <- NA
+   
+  #---------------------------------------------------------------------------------------
+  # Do you want your data folder in the runset or host it on say a hard drive
+  # Either put "auto" or the address (in quotes that you want it in)
+  #---------------------------------------------------------------------------------------
+   datadir_loc <- "~/Desktop/"
+   
     
 #=========================================================================================
 # SPATIAL CROP OPTIONS - ANSWER THESE QUESTIONS

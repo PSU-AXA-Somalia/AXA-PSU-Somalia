@@ -52,13 +52,10 @@ runset_foldername_visualise   <- "Output2_Visualisation"
 dir_data_shape           <- paste(dir_data,"1_Shapefiles",    sep=sep)
 dir_data_remote          <- paste(dir_data,"2_Remote_Sensing",sep=sep)
 
-
 #Data Level 3
 dir_data_remote_ARaw       <- paste(dir_data_remote,"0_Raw_data",sep=sep)
 dir_data_remote_BGeoTif    <- paste(dir_data_remote,"1_Raw_geoTifs",sep=sep)
 dir_data_remote_CDerived   <- paste(dir_data_remote,"2_Derived_Statistics",sep=sep)
-
-
 
 #Data Level 4
 dir_data_remote_ARaw_missing    <- paste(dir_data_remote_ARaw,"All_Missing_Filled_Files",sep=sep)
