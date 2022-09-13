@@ -557,10 +557,7 @@ if(movedata){
     }else{
       newbox <- boundary
     }
-    terrabbox <- ext(as.numeric(newbox$xmin),
-                     as.numeric(newbox$xmax),
-                     as.numeric(newbox$ymin),
-                     as.numeric(newbox$ymax))
+    
   }  
   
   #---------------------------------------------------------------------------------
@@ -580,34 +577,12 @@ if(movedata){
   # Function to crop and resave the data
   #---------------------------------------------------------------------------------
   minicrop <- function(infile,indirectory,sep,Runset,newbox,outdirectory,Overwrite){
-     
-     if(grepl(sep,infile)){
-        #there are subdirectories ,create them and edit the actual filename
-        actualfile <- strsplit(infile,sep)
-        actualfilename <- actualfile[[1]][length(actualfile[[1]])]
-        outputfile <- paste(outdirectory,infile,sep=sep)
-        outputfile <- str_replace(outputfile,actualfilename,paste(Runset,actualfilename,sep="_"))
-        
-        # make subdirectories
-        for(sublayer in 1:(length(actualfile[[1]])-1)){
-           conditionalcreate(paste(outdirectory,actualfile[[1]][sublayer],sep=sep))
-        }
-           
-     }else{
-        outputfile <- paste(outdirectory,infile,sep=sep)
-        outputfile <- paste(outdirectory,paste(Runset,infile,sep="_"),sep=sep)
-     }
-
-    
+    outputfile <- paste(outdirectory,paste(Runset,infile,sep="_"),sep=sep)
     if((Overwrite == FALSE) & (file.exists(outputfile))){
       
     }else{
-      r <- rast(paste(indirectory,infile,sep=sep))
-      
-      suppressMessages(suppressWarnings(terra::writeRaster(round(crop(r,terrabbox),1), 
-                                                           filename=outputfile, filetype="GTiff",overwrite=Overwrite)))
-      a<-try(suppressMessages(suppressWarnings(file.remove(paste(outputfile,".aux.json",sep="")))))
-      
+      r <- raster::raster(paste(indirectory,infile,sep=sep))
+      writeRaster(round(crop(r,newbox),1), filename=outputfile, format="GTiff", overwrite=Overwrite)
     }  
     return(infile)
   }
@@ -627,21 +602,19 @@ if(movedata){
       
       if(verbose){message(paste("     ",products_daily[p] ))}
       indirectory <- paste(dir_data_remote_BGeoTif_daily,products_daily[p],sep=sep)
-      productfiles <- list.files(indirectory,recursive=TRUE,pattern=".tif")
+      productfiles <- list.files(indirectory,recursive=TRUE)
+      productfiles <- productfiles[(grep(".tif",productfiles))]
       outdirectory <- paste(dir_data_remote_BGeoTif_daily_runset,products_daily[p],sep=sep)
       Overwrite=FALSE
       
       productfilesnew <- base::split(productfiles,base::cut(seq_along(productfiles),breaks=10))
       
       for(time in 1:length(productfilesnew)){
-         a <- Sys.time()
-         
         if(verbose){message(paste("       From",productfilesnew[[time]][1],"to",productfilesnew[[time]][length(productfilesnew[[time]])]))}
         test <- foreach(tmpn = productfilesnew[[time]]) %dopar%  minicrop(tmpn,indirectory,sep,Runset,newbox,outdirectory,Overwrite)
-
-        print(Sys.time() -a  )
       }
-
+      print(Sys.time() -a  )
+      
     }
   }else{
     message("     NO DAILY DATA")

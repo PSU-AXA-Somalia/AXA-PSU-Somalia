@@ -39,6 +39,7 @@ for(n_data in seq_along(Script_All)){
       
       if((!dir.exists(paste(dir_data_remote_ARaw,StemIn,sep="/")))|(length(dir(path=paste(dir_data_remote_ARaw,StemIn,sep="/"),all.files=TRUE))==0)){
          if(verbose %in% c(TRUE,"Limited")){message(paste("       No data so this will be ignored \n       ",Script_All[n_data],"\n"))}
+         
       }else{
          source(Script_All[n_data])
       }   

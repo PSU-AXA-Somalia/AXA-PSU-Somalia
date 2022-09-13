@@ -2,14 +2,6 @@
 #---------------------------------------------------------------------------------
 # MAIN CODE, st up the IRI files and connect to the subfolders
 #---------------------------------------------------------------------------------
-Data_Meta <- read.csv("Step0_Datasets.csv")
-names(Data_Meta)[3] <- "Satellite"
-
-Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
-Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
-Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
-Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
-
 
 #---------------------------------------------------------------------------------
 # Create the record of missing data from the 1_RawGeoTifs folder

@@ -1,11 +1,11 @@
 #=================================================================================
-# HLG 2021,
-# This converts raw RFE2 data to my standardised format
+# HLG 2022,
+# This converts raw CCI data to my standardised format
 #=================================================================================
 # Dataset parameters
 #---------------------------------------------------------------------------------
-# family    <-"rain"  ;  dataset   <- "CHIRPS"
-# version   <- 2      ;  modified  <- "Raw"
+# family    <-"sm"  ;  dataset   <- "CCI"
+# version   <- 1      ;  modified  <- "Raw"
 # overwrite <- FALSE
 
 ##################################################################
@@ -66,12 +66,8 @@ if(length(file_list.out)<=0){dataoverwrite <- TRUE}else{dataoverwrite <- overwri
 
 # I'm assuming the data is stored in folders simply named the year
 dir_data_in  <- paste(dir_data_remote_ARaw,StemIn,sep=sep)
-yearfolders <- list.files(dir_data_in)
-yearfolders <- suppressWarnings(yearfolders[which(as.numeric(yearfolders) %in% 1980:2060)])
-
-# Now let's make a master list of input files and their source locations
-file_list.in <- paste(dir_data_in,list.files(dir_data_in,recursive=TRUE),sep=sep)
-file_list.in <- file_list.in[grep(".gz",file_list.in)]
+file_list.in <- list.files(dir_data_in,recursive=TRUE,include.dirs=TRUE,full.names = TRUE)
+file_list.in <- file_list.in[grep(".nc",file_list.in)]
 
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"))}
 
@@ -80,7 +76,8 @@ if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"
 #---------------------------------------------------------------------------------
 testval <- round(mean(length(file_list.in)))
 suppressWarnings(rm(Dataset_Example))
-Dataset_Example <- suppressWarnings(terra::rast(paste("/vsigzip/",(file_list.in[testval]),sep=sep)))
+Dataset_Example <- suppressWarnings(terra::rast((file_list.in[testval])))
+
 suppressWarnings(crs(Dataset_Example) <- "EPSG: 4326")
 
 
@@ -95,8 +92,10 @@ if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
 #---------------------------------------------------------------------------------
 # Extract dates from the files
 #---------------------------------------------------------------------------------
-date.list <- substr(unlist(lapply(strsplit(file_list.in,"chirps-v2.0."),"[",2)),1,10)
-date.list <- as.Date(date.list,format="%Y.%m.%d")
+myfilenames <- list.files(dir_data_in,recursive=TRUE,include.dirs = FALSE)
+myfilenames <- myfilenames[grep(".nc",myfilenames)]
+date.list <- substr(unlist(lapply(strsplit(myfilenames,"ADJUSTED-"),"[",2)),1,8)
+date.list <- as.Date(date.list,format="%Y%m%d")
 file_list.in <- file_list.in[order(date.list)]
 date.list <- date.list[order(date.list)]
 
@@ -109,7 +108,7 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 #---------------------------------------------------------------------------------
 # CREATE TAMSAT FUNCTION
 #---------------------------------------------------------------------------------
-CreateCHIRPS <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
+CreateCCI <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
    
    # Create filename
    year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
@@ -136,15 +135,17 @@ CreateCHIRPS <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
    if(continue == TRUE){
       
       # Read in and change the projection
-      r <- suppressWarnings(terra::rast(paste("/vsigzip/",file_name.in,sep=sep)))
+      r <- suppressWarnings(terra::rast(file_name.in))
       crs(r) <- paste("EPSG:",globalcrs,sep="")
-      r[r < 0] <- NA
+      r <- r$sm
+      #r[r < 0] <- NA
       
       if(length(unique(values(r)))<=1){
          return(paste("EMPTY",file_name.out))
       }else{
          if(file.exists(file_loc.out)){file.remove(file_loc.out)}
-         suppressMessages(suppressWarnings(terra::writeRaster(round(r,1), filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         suppressMessages(suppressWarnings(terra::writeRaster(r, filename=file_loc.out, filetype="GTiff",overwrite=TRUE)))
+         a<-try(suppressMessages(suppressWarnings(file.remove(paste(file_loc.out,".aux.json",sep="")))))
          # Write regridded to file - to be added
          return(file_name.out)
       }
@@ -161,7 +162,7 @@ CreateCHIRPS <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
    a <- Sys.time()
    if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
    
-   myres <- foreach(f = 1:length(file_list.in)) %dopar%  CreateCHIRPS(f,dir_data_in,StemIn,dir_data_out,StemOut,
+   myres <- foreach(f = 1:length(file_list.in)) %dopar%  CreateCCI(f,dir_data_in,StemIn,dir_data_out,StemOut,
                                                                    date.list,file_list.in,
                                                                    globalcrs,dataoverwrite)
    

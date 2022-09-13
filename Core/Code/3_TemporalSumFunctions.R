@@ -420,7 +420,7 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
 #---------------------------------------------------------------------------------------
 # For each product
 #---------------------------------------------------------------------------------------
-for(n_data in c(1,2,3,4,15,16,8,10,11,12,13,14,5,6,9,7)){#:length(Daily_datasetlist$Stem))){
+for(n_data in 1:length(Daily_datasetlist$Stem)){
 
    #---------------------------------------------------------------------------------------
    # Set up the meta data and get the input files
