@@ -133,6 +133,7 @@ for (m in 2:length(LocalParamsWrapper)){
 
 #---------------------------------------------------------------------------------
 # Read in and store runset setup, editing as necessary
+# TWEAK 5 THIS IS BROKEN - https://workflowy.com/#/89d905d8b69c
 #---------------------------------------------------------------------------------
 LocalParams        <- readLines("Step0_Global_SetUp.R")
 
@@ -150,8 +151,8 @@ LocalParams[LocalParmsLineproj[1]] <- "  dir_main <- substr(getwd(),start=1,stop
 
 
  # Switch core to runset name
-  LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <- dir_main,", "\"","../../Core", "\"",",sep=sep" ,sep="")
-  LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- dir_main,", "\"","../Runset", "\"",",sep=sep" ,sep="")
+  LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <-   paste(dir_main,", "\"","../../Core", "\"",",sep=sep)" ,sep="")
+  LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- paste (dir_main,", "\"","../Runset", "\"",",sep=sep)" ,sep="")
   
  # Makr runset output folders
   LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
