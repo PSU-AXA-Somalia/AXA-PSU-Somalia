@@ -60,40 +60,56 @@ if(length(file_list.out)<=0){dataoverwrite <- TRUE}else{dataoverwrite <- overwri
 #=================================================================================
 # THIS PART CHANGES FROM DATASET TO DATASET
 #=================================================================================
+
+
+#---------------------------------------------------------------------------------
+# If there is an unzipped folder, check inside that too 
+# List non zipped files
+#---------------------------------------------------------------------------------
+TAMSATdatadir <- paste(dir_data_in,sep=sep)
+
+if(!(file.exists(TAMSATdatadir))){
+   dir.create(TAMSATdatadir)
+}else{
+   allfile_list.in <- list.files(dir_data_in,pattern=".nc",recursive=TRUE)
+}
+allfilenamein <- strsplit(allfile_list.in,sep)
+chars <- lapply(allfilenamein,length)
+allfilenamein <- unique(unlist(lapply(allfilenamein,"[",unlist(chars))))
+
 #---------------------------------------------------------------------------------
 # List input zip files
 #---------------------------------------------------------------------------------
-file_list.in <- list.files(dir_data_in)[grep(".zip",list.files(dir_data_in))]
+zippedfile_list.in <- list.files(dir_data_in, pattern=".zip",recursive=TRUE)
+zippedfile_list.in <-  zippedfile_list.in[grep("TAMSAT",zippedfile_list.in)]
 
-#---------------------------------------------------------------------------------
-# TAMSAT data is zipped by year, let's make a folder with it all unzipped
-#---------------------------------------------------------------------------------
-TAMSATdatadir <- paste(dir_data_in,"AllDataUnzipped",sep=sep)
-if(!(file.exists(TAMSATdatadir))){dir.create(TAMSATdatadir)}
+# check if files already exist. if not, unzip
+for(n in 1:length(zippedfile_list.in)){
+   tmp <- unlist(unzip(paste(dir_data_in,zippedfile_list.in[n],sep=sep), list=TRUE)$Name)
+   zippedfilesin <- strsplit(tmp,sep)
+   chars <- lapply(zippedfilesin,length)
+   zippedfilesin <- unique(unlist(lapply(zippedfilesin,"[",unlist(chars))))
+   
+   # Here I simply check if the file exists using the name attribute, I COULD check the file size for corruption
+   if(length(which(zippedfilesin %in% allfilenamein))<length(zippedfilesin)){
+      if(verbose==TRUE){print(paste("unzipping",zippedfile_list.in[n]))}
+      a <- suppressWarnings(unzip(paste(dir_data_in,zippedfile_list.in[n],sep=sep),
+                                  exdir=TAMSATdatadir, overwrite=FALSE,junkpaths = TRUE,list=FALSE))
+   }
+}
 
-#---------------------------------------------------------------------------------
-# Need to find the final year because I do want to overwrite that - I will assume that
-# it needs completing each time.
-#---------------------------------------------------------------------------------
-if(verbose==TRUE){print("unzipping")}
-for(f in 1:length(file_list.in)){
-   if(verbose==TRUE){print(file_list.in[f])}
-   a <- suppressWarnings(unzip(paste(dir_data_in,file_list.in[f],sep=sep),
-                               exdir=TAMSATdatadir, overwrite=FALSE,junkpaths = TRUE,list=FALSE))
-} 
+
 
 #---------------------------------------------------------------------------------
 # OK now pretend that never happened
 #---------------------------------------------------------------------------------
-dir_data_inold <- dir_data_in
-dir_data_in <- TAMSATdatadir
-file_list.in <- list.files(dir_data_in)[grep(".nc",list.files(dir_data_in))]
+allfile_list.in <- list.files(dir_data_in,pattern=".nc",recursive=TRUE)
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"))}
 
 #---------------------------------------------------------------------------------
 # Extract Lon/Lat for TAMSAT
 #---------------------------------------------------------------------------------
-Dataset_Example <- suppressWarnings(raster(paste(dir_data_in,file_list.in[5],sep=sep),crs=4236))
+Dataset_Example <- suppressWarnings(raster(paste(dir_data_in,allfile_list.in[5],sep=sep),crs=4236))
 lat     <- coordinates(Dataset_Example)[,2]
 long    <- coordinates(Dataset_Example)[,1]
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
@@ -110,22 +126,21 @@ if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
 #---------------------------------------------------------------------------------
 # Extract dates from the files
 #---------------------------------------------------------------------------------
-date.list <- unlist(lapply(strsplit(file_list.in,".v3.1.nc"),"[",1))
+date.list <- unlist(lapply(strsplit(allfile_list.in,".v3.1.nc"),"[",1))
 date.list <- as.Date(substr(date.list,4,13),format="%Y_%m_%d")
-file_list.in <- file_list.in[order(date.list)]
+allfile_list.in <- allfile_list.in[order(date.list)]
 date.list <- date.list[order(date.list)]
 
 #Make a full date table from that list and write to file
 dates        <- suppressWarnings(makedates(date.list))
 dates        <- dates[which(is.na(dates$Date)==FALSE),]
-dates$file_list.in <- file_list.in
+dates$allfile_list.in <- allfile_list.in
 
-write.csv(dates,paste(dir_data_inold,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)   
 write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=FALSE,quote=FALSE)   
 #---------------------------------------------------------------------------------
 # CREATE TAMSAT FUNCTION
 #---------------------------------------------------------------------------------
-CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
+CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,allfile_list.in,globalcrs,dataoverwrite){
    
    # Create filename
    year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
@@ -146,7 +161,7 @@ CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
    }
    
    # Unzip the data, and rename
-   file_name.in <- paste(dir_data_in,file_list.in[f],sep=sep)
+   file_name.in <- paste(dir_data_in,allfile_list.in[f],sep=sep)
    
    if((file.exists(file_name.in))&(continue == TRUE)){continue <- TRUE}else{continue <- FALSE}
    
@@ -178,15 +193,11 @@ CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,fil
 a <- Sys.time()
 if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Data"))}
 
-myres <- foreach(f = 1:length(file_list.in))%dopar%  CreateTAMSAT(f,dir_data_in,StemIn,dir_data_out,StemOut,
-                                                                date.list,file_list.in,
+myres <- foreach(f = 1:length(allfile_list.in))%dopar%  CreateTAMSAT(f,dir_data_in,StemIn,dir_data_out,StemOut,
+                                                                date.list,allfile_list.in,
                                                                 globalcrs,dataoverwrite)
 
 print(Sys.time() -a)
-
-if(verbose==TRUE){print("\n     Deleting raw unzipped files")}
-
-file.remove(paste(TAMSATdatadir,list.files(TAMSATdatadir),sep=sep))
 
 
 

@@ -131,7 +131,7 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
       }else{
          filenamesin <- files_in.daily
       }   
-      filenamesout <- str_replace(files_in.daily,"Geo",regridname)
+      filenamesout <- str_replace(filenamesin,"Geo",regridname)
       
       #------------------------------------------------------------------------------
       # If so, set up a new template
@@ -142,13 +142,12 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
          
          regridtemplate <- extend(regridtemplate,regrid_test)
          
-         
-         
-         res <- foreach(nnn = 1:length(filenamesin)) %dopar%  gdalwarp(srcfile=paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily[nnn],sep=sep),
+          
+         res <- foreach(nnn = 1:length(filenamesin)) %dopar%  suppressWarnings(try(gdalwarp(srcfile=paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily[nnn],sep=sep),
                                                                        dstfile=paste(dir_reformat,filenamesout[nnn],sep=sep),
                                                                        tr=res(regridtemplate),
                                                                        te=c(bbox(extent(regridtemplate))),
-                                                                       r='bilinear',overwrite=FALSE,verbose=FALSE)
+                                                                       r='bilinear',overwrite=FALSE,verbose=FALSE)))
          
          if(family %in% c("rain","tmin","tmax","rhum")){
             myresults <- foreach(nnn = 1:length(filenamesin)) %dopar% terra::writeRaster(round(rast(paste(dir_reformat,filenamesout[nnn],sep=sep)),1), 

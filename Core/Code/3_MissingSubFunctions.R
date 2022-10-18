@@ -63,7 +63,7 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
          
       }
       
-      r <- suppressWarnings(rast(file.name))
+      r <- suppressWarnings(raster(file.name))
       suppressWarnings(crs(r) <- paste("EPSG:",globalcrs,sep=""))
       
       if(tolower(family) %in% c("tmin" ,"tmax")){

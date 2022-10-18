@@ -9,8 +9,10 @@
 #
 # Now look through each dataset for missing data
 #---------------------------------------------------------------------------------
+if(verbose %in% c(TRUE,"Limited")){message(paste("     filling missing data"))}
 
 for(n_data in 1:nrow(Daily_datasetlist)){
+
    #-----------------------------------------------------------------------------
    # Set up metadata
    #-----------------------------------------------------------------------------
@@ -22,6 +24,14 @@ for(n_data in 1:nrow(Daily_datasetlist)){
    iri            <- Daily_datasetlist$IRIStem[n_data]  
    Satellite      <- Daily_datasetlist$Satellite[n_data]  
    satenddate     <- Daily_datasetlist$Enddate[n_data]  
+   
+   if(grepl("/",satenddate)){
+      satenddate <- as.Date(satenddate,format="%m/%d/%y")
+   }else{
+      satenddate <- as.Date(satenddate)
+   }
+   if(verbose %in% c(TRUE,"Limited")){message(paste("         ",stem))}
+   
    
    geo_stem <- paste(dir_data_remote_BGeoTif_daily,dataset,sep="/")
    raw_stem <- paste(dir_data_remote_ARaw_missing)
