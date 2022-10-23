@@ -63,12 +63,14 @@ if(length(file_list.out)<=0){dataoverwrite <- TRUE}else{dataoverwrite <- overwri
 #---------------------------------------------------------------------------------
 # List input zip files
 #---------------------------------------------------------------------------------
-file_list.in <- list.files(dir_data_in)[grep(".zip",list.files(dir_data_in))]
+file_list.in <- list.files(dir_data_in,pattern=".tif.zip",recursive=TRUE)
 
 #---------------------------------------------------------------------------------
 # Extract Lon/Lat for RFE
 #---------------------------------------------------------------------------------
-Dataset_Example <- suppressWarnings(raster(unzip(paste(dir_data_in,file_list.in[5],sep=sep)),crs=4236))
+unzip(paste(dir_data_in,file_list.in[5],sep=sep),exdir =dir_data_in)
+newfiles <- substr(file_list.in[5],1,nchar(file_list.in[5])-4)
+Dataset_Example <- suppressWarnings(raster(paste(dir_data_in,newfiles,sep=sep)))
 lat     <- coordinates(Dataset_Example)[,1]
 long    <- coordinates(Dataset_Example)[,2]
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
@@ -77,7 +79,7 @@ if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
    fwrite(list(lat),paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE) 
 }        
-file.remove(substr(file_list.in[5],start=1,stop=nchar(file_list.in[5])-4))
+a <- file.remove(paste(dir_data_in,newfiles,sep=sep))
 
 #---------------------------------------------------------------------------------
 # Extract dates from the files
@@ -97,7 +99,7 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 # CREATE RFE FUNCTION
 #---------------------------------------------------------------------------------
 CreateRFE2 <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,file_list.in,globalcrs,dataoverwrite){
-   
+   require(terra)
    # Create filename
    
    year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)

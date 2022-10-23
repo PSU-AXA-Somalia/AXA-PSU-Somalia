@@ -12,7 +12,8 @@ if(verbose){message("Step 0: Loading Global Parameters")}
 # Legacy directory separator. It will likely always be "/"
 # now windows has its act together in R.
 #---------------------------------------------------------------------------------
-sep <- "/"       
+sep <- "/"
+#sep <- "\\"
 
 #---------------------------------------------------------------------------------
 # Main directory (e.g. the location of the github download folder)
@@ -124,8 +125,8 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
     cranpackages <- rbind(cranpackages,c("rgdal" ,    "1.0.0"  ))
     
     githubpackages <- data.frame(Github="hgreatrex",Package="Greatrex.Functions",Version="0.1.1")
-    #remotes::install_github("gearslaboratory/gdalUtils")
-    #remotes::install_github("isciences/exactextractr")
+    remotes::install_github("gearslaboratory/gdalUtils")
+    remotes::install_github("isciences/exactextractr")
     # TO DO NEED TO ADD THESE IN AND GRAB VERSION NUMBERS
 
     #---------------------------------------------------------------------------------
@@ -235,7 +236,7 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
       if(verbose){message("        Update packages turned off")}
     }
     
-
+    suppressPackageStartupMessages(library(terra))
   #---------------------------------------------------------------------------------
   # Load packages into R
   #---------------------------------------------------------------------------------
@@ -267,7 +268,7 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
      dir_main <- substr(dir_main,start=1,stop=nchar(dir_main)-5)
   }  
   
-   #Level 0 
+   #Level 0
    create <- sapply(c(dir_core,dir_runset),conditionalcreate,silent=TRUE)
    if(getwd() != dir_core){
       stop(paste("Either you did not open R-studio through double clicking Step0_Core_PROJECTFILE.Rproj..\nOr you incorrectly typed the location of your main directory in parameters\nYour current directory is:\n",

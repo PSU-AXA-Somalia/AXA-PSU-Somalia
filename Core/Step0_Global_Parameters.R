@@ -42,7 +42,9 @@ globalparams_lastupdated <- as.Date("2022-06-11")
     # It will still assume the code is in this folder structure.
     # Else set to NA
     #---------------------------------------------------------------------------------
-    RemoteData <- "/Volumes/Mac storage space/Work/Somalia/AXA-PSU-Somalia/Core/Data"
+#    RemoteData <- "/Volumes/Mac storage space/Work/Somalia/AXA-PSU-Somalia/Core/Data"
+    
+    RemoteData <-  "C:/Users/hlg5155/Documents/Github/AXA-PSU-Somalia/TESTData"
     
 #================================================================================================================
 # 2. SPATIAL - defaults are probably fine here

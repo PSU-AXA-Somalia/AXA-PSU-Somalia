@@ -81,24 +81,53 @@ allfilenamein <- unique(unlist(lapply(allfilenamein,"[",unlist(chars))))
 # List input zip files
 #---------------------------------------------------------------------------------
 zippedfile_list.in <- list.files(dir_data_in, pattern=".zip",recursive=TRUE)
-zippedfile_list.in <-  zippedfile_list.in[grep("TAMSAT",zippedfile_list.in)]
+zippedfile_list.in <- zippedfile_list.in[grep("TAMSAT", zippedfile_list.in)]
 
-# check if files already exist. if not, unzip
-for(n in 1:length(zippedfile_list.in)){
-   tmp <- unlist(unzip(paste(dir_data_in,zippedfile_list.in[n],sep=sep), list=TRUE)$Name)
-   zippedfilesin <- strsplit(tmp,sep)
-   chars <- lapply(zippedfilesin,length)
-   zippedfilesin <- unique(unlist(lapply(zippedfilesin,"[",unlist(chars))))
-   
-   # Here I simply check if the file exists using the name attribute, I COULD check the file size for corruption
-   if(length(which(zippedfilesin %in% allfilenamein))<length(zippedfilesin)){
-      if(verbose==TRUE){print(paste("unzipping",zippedfile_list.in[n]))}
-      a <- suppressWarnings(unzip(paste(dir_data_in,zippedfile_list.in[n],sep=sep),
-                                  exdir=TAMSATdatadir, overwrite=FALSE,junkpaths = TRUE,list=FALSE))
+if (length(zippedfile_list.in) > 0) {
+   # check if files already exist. if not, unzip
+   for (n in 1:length(zippedfile_list.in)) {
+      tmp <-
+         unlist(unzip(paste(
+            dir_data_in, zippedfile_list.in[n], sep = sep), list = TRUE)$Name)
+      zippedfilesin <- strsplit(tmp, sep)
+      chars <- lapply(zippedfilesin, length)
+      zippedfilesin <-
+         unique(unlist(lapply(zippedfilesin, "[", unlist(chars))))
+      
+      # Here I simply check if the file exists using the name attribute, I COULD check the file size for corruption
+      if (length(which(zippedfilesin %in% allfilenamein)) < length(zippedfilesin)) {
+         if (verbose == TRUE) {
+            print(paste("unzipping", zippedfile_list.in[n]))
+         }
+         a <- suppressWarnings(
+               unzip(
+                  paste(dir_data_in, zippedfile_list.in[n], sep = sep),
+                  exdir = TAMSATdatadir,
+                  overwrite = FALSE,
+                  junkpaths = TRUE,
+                  list = FALSE
+               )
+            )
+      }
    }
 }
+#---------------------------------------------------------------------------------
+# and move files into annual folders
+#---------------------------------------------------------------------------------
+allfile_list.in <- list.files(dir_data_in,pattern=".nc",recursive=FALSE)
+date.list <- as.Date(substr(allfile_list.in,4,13),format="%Y_%m_%d")
+years <- sort(unique(as.numeric(format.Date(date.list,"%Y"))))
+months <- sort(unique(format.Date(date.list,"%m")))
 
-
+for(y in seq_along(years)){
+   conditionalcreate(paste(TAMSATdatadir,years[y],sep=sep))
+   for(m in seq_along(months)){
+      conditionalcreate(paste(TAMSATdatadir,years[y],months[m],sep=sep))
+      tmp <- allfile_list.in[format.Date(date.list,"%Y-%m") %in% paste(years[y],months[m],sep="-")]
+      a <- file.copy(paste(TAMSATdatadir,tmp,sep=sep),paste(TAMSATdatadir,years[y],months[m],tmp,sep=sep))
+      file.remove(paste(TAMSATdatadir,tmp,sep=sep))
+   }
+}
 
 #---------------------------------------------------------------------------------
 # OK now pretend that never happened
@@ -114,11 +143,9 @@ lat     <- coordinates(Dataset_Example)[,2]
 long    <- coordinates(Dataset_Example)[,1]
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
    data.table::fwrite(list(long),paste(dir_data_in,   sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
-   data.table::fwrite(list(long),paste(dir_data_inold,sep, StemIn,"_Longitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
 }
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
    data.table::fwrite(list(lat),file=paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
-   data.table::fwrite(list(lat),file=paste(dir_data_inold,sep, StemIn,"_Latitude.csv",sep=""),row.names=FALSE,quote=FALSE)   
 }
 
 
@@ -127,6 +154,9 @@ if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Latitude.csv",sep="")))){
 # Extract dates from the files
 #---------------------------------------------------------------------------------
 date.list <- unlist(lapply(strsplit(allfile_list.in,".v3.1.nc"),"[",1))
+if(grep("/",date.list[1])){
+   date.list <- unlist(lapply(strsplit(date.list,"/"),"[",length(strsplit(date.list,"/")[[1]])))
+}
 date.list <- as.Date(substr(date.list,4,13),format="%Y_%m_%d")
 allfile_list.in <- allfile_list.in[order(date.list)]
 date.list <- date.list[order(date.list)]
@@ -141,7 +171,7 @@ write.csv(dates,paste(dir_data_in,"/",StemIn,"_Datelist.csv",sep=""),row.names=F
 # CREATE TAMSAT FUNCTION
 #---------------------------------------------------------------------------------
 CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,allfile_list.in,globalcrs,dataoverwrite){
-   
+   require(terra)
    # Create filename
    year_dir.out <- paste(dir_data_out,substr(date.list[f],1,4),sep=sep)
    
@@ -168,7 +198,7 @@ CreateTAMSAT <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list,all
    # If you do...
    if(continue == TRUE){
       # Read in and change the projection
-      r <- rast(file_name.in)$"rfe_filled"
+      r <- terra::rast(file_name.in)$"rfe_filled"
       crs(r) <- paste("EPSG:",globalcrs,sep="")
       r[r < 0] <- NA
       
