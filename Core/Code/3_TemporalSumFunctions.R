@@ -10,7 +10,7 @@
 ############################################################################
 # PENTADAL FUNCTION
 ############################################################################
-makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimitpendad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite,family){  
+makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimitpendad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite,family,sep){  
    
    #---------------------------------------------------------------------------------
    # Function to regrid daily data
@@ -20,11 +20,11 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
    dataset_regrid  <- paste(datastem,regridname,sep="_")
    dir_reformat <- paste(dir_data_remote_BGeoTif_daily,dataset_regrid,sep=sep)
    
-
+   
    if(!dir.exists(dir_reformat)){dir.create(dir_reformat)}
    
    subdirs <- paste(dir_reformat,list.dirs(paste(dir_data_remote_BGeoTif_daily,
-                                                            dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
+                                                 dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
    for(n in 1:length(subdirs)){
       if(!dir.exists(subdirs[n])){dir.create(subdirs[n])}
    }
@@ -32,7 +32,7 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
    if(verbose %in% c(TRUE,"Limited")){message(paste("     Sorting out meta data"))}
    aa <- Sys.time()
    
-
+   
    
    ### pentad data
    datasetpentaddir        <- paste(dir_data_remote_BGeoTif_pentad,paste("pentad",dataset,sep="_"),sep=sep)
@@ -43,9 +43,9 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
    
    
    subdirs <- paste(datasetpentaddir,list.dirs(paste(dir_data_remote_BGeoTif_daily,
-                                                    dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
+                                                     dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
    subdirsref <- paste(datasetpentaddireformat,list.dirs(paste(dir_data_remote_BGeoTif_daily,
-                                                              dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
+                                                               dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
    for(n in 1:length(subdirs)){
       if(!dir.exists(subdirs[n])){dir.create(subdirs[n])}
       if(!dir.exists(subdirsref[n])){dir.create(subdirsref[n])}
@@ -108,7 +108,7 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
       if(verbose %in% c(TRUE,"Limited")){message(paste("     Coping data to regrid file - same resolution"))}
       a<-file.copy(paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily,sep=sep), 
                    paste(dir_reformat,filenamesout,sep=sep),overwrite=FALSE)
-
+      
       
    }
    print(Sys.time() -aa)  
@@ -146,18 +146,35 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
          if(valid_install == TRUE){ 
             if(verbose %in% c(TRUE,"Limited")){message(paste("     Using GDAL"))}
             res <- foreach(nnn = 1:length(filenamesin)) %dopar%  suppressWarnings(try(gdalwarp(srcfile=paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily[nnn],sep=sep),
-                                                                       dstfile=paste(dir_reformat,filenamesout[nnn],sep=sep),
-                                                                       tr=res(regridtemplate),
-                                                                       te=c(bbox(extent(regridtemplate))),
-                                                                       r='bilinear',overwrite=FALSE,verbose=FALSE)))
+                                                                                               dstfile=paste(dir_reformat,filenamesout[nnn],sep=sep),
+                                                                                               tr=res(regridtemplate),
+                                                                                               te=c(bbox(extent(regridtemplate))),
+                                                                                               r='bilinear',overwrite=FALSE,verbose=FALSE)))
+            if(family %in% c("rain","tmin","tmax")){
+               myresults <- foreach(nnn = 1:length(filenamesin)) %dopar% terra::writeRaster(round(rast(paste(dir_reformat,filenamesout[nnn],sep=sep)),1), 
+                                                                                            filename=paste(dir_reformat,filenamesout[nnn],sep=sep), 
+                                                                                            filetype="GTiff", overwrite=TRUE)
+            }
          }else{
-            if(verbose %in% c(TRUE,"Limited")){message(paste("    STOPP!"))}
-            stop()
-         }
-         if(family %in% c("rain","tmin","tmax","rhum")){
-            myresults <- foreach(nnn = 1:length(filenamesin)) %dopar% terra::writeRaster(round(rast(paste(dir_reformat,filenamesout[nnn],sep=sep)),1), 
-                                                                              filename=paste(dir_reformat,filenamesout[nnn],sep=sep), 
-                                                                              filetype="GTiff", overwrite=TRUE)
+            
+            minifunction <- function(files_in.daily,filenamesout,family,dir_data_remote_BGeoTif_daily,dir_reformat,dataset,regridtemplate,sep){
+               require(terra)
+               r <- terra::rast(paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily,sep=sep))
+               
+               if(family %in% c("rain","tmin","tmax")){
+                  try(terra::writeRaster(round(terra::resample(r,rast(regridtemplate)),1), 
+                                         filename=paste(dir_reformat,filenamesout,sep=sep), 
+                                         filetype="GTiff", overwrite=TRUE))
+               }else{
+                  try(terra::writeRaster(terra::resample(r,rast(regridtemplate)), 
+                                         filename=paste(dir_reformat,filenamesout,sep=sep), 
+                                         filetype="GTiff", overwrite=TRUE))
+               }
+            }
+            
+            myresults <- foreach(nnn = 1:length(filenamesin)) %dopar% minifunction(files_in.daily[nnn],filenamesout[nnn],
+                                                                                   family,dir_data_remote_BGeoTif_daily,
+                                                                                   dir_reformat,dataset,regridtemplate,sep)
          }
       }
       if(verbose %in% c(TRUE,"Limited")){message(paste("     Finished regridding"))}
@@ -165,32 +182,66 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
       
    }
    rm(regrid_test)
-
+   #source(paste(dir_code,"3b_TemporalSumFunctionsSub.R",sep=sep))
+   pentadsumfunct <- function(nnn,fulldatelist,dir_data_remote_BGeoTif_daily,datasetpentaddir,dataset,files_in.daily,dates,overwrite,family){
+      require(terra)
+      
+      #------------------------------------------------------------------------------
+      # get the pentad wanted and make the output file name
+      #------------------------------------------------------------------------------
+      pentadyear <- fulldatelist$pentadyear[nnn]
+      outputfile <- paste(datasetpentaddir,fulldatelist$year[nnn],paste(dataset,"_pentad_",pentadyear,".tif",sep=""),sep=sep)
+      
+      #------------------------------------------------------------------------------
+      # if the outputfile exists, male the input filename
+      #------------------------------------------------------------------------------
+      if((overwrite==TRUE)|(!file.exists(outputfile))){
+         inputfiles <- paste(dir_data_remote_BGeoTif_daily,dataset,
+                             files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
+                                                     dates$Date[dates$YearPentad %in% pentadyear])],sep=sep)
+         if(length(inputfiles) > 2){
+            if(family %in% c("rain","tmin","tmax")){
+               suppressMessages(suppressWarnings(terra::writeRaster(round(mean(rast(inputfiles)),1), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            }else{
+               suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+               
+            }            
+         }
+         
+      }   
+      return(outputfile)
+   }
+   
    #------------------------------------------------------------------------------
    # and calculate the output and save to a new file
    #------------------------------------------------------------------------------
    if(verbose %in% c(TRUE,"Limited")){message(paste("     Summing daily to pendatal (this can take a while)"))}
-   
    aa <- Sys.time()
-   myresults <- foreach(nnn = 1:nrow(fulldatelist)) %dopar% pentadsumfunct(nnn,fulldatelist ,
-                                                                           dir_data_remote_BGeoTif_daily,
-                                                                           datasetpentaddir,
-                                                                           dataset,files_in.daily,
-                                                                           dates,overwrite,family)
+   # if(sum(fulldatelist$missing) > 0){
+   myresults <- matrix()
+   myresults <- foreach(nnn = 1:nrow(fulldatelist)) %dopar%  pentadsumfunct(nnn,fulldatelist,
+                                                                            dir_data_remote_BGeoTif_daily,
+                                                                            datasetpentaddir,
+                                                                            dataset,files_in.daily,
+                                                                            dates,overwrite,family)
    print(Sys.time() -aa)  
+   #} 
    
    # Only do this twice if the regrid actually did something
    if(verbose %in% c(TRUE,"Limited")){message(paste("     Summing daily regridded to pendatal (this can take a while)"))}
-   
+   ls()
    if(regrid_flag){
       aa <- Sys.time()
       files_in.dailyregrid   <- list.files(dir_reformat,recursive=TRUE)
+      # if((sum(fulldatelist$missing) > 0) |
+      #   ((length(list.files(datasetpentaddireformat,pattern=".tif",recursive=TRUE)))!=length(list.files(datasetpentaddir,pattern=".tif",recursive=TRUE)))) {
       
       myresults <- foreach(nnn = 1:nrow(fulldatelist)) %dopar% pentadsumfunct(nnn,fulldatelist ,
                                                                               dir_data_remote_BGeoTif_daily,
                                                                               datasetpentaddireformat,
                                                                               dataset_regrid,files_in.dailyregrid,
                                                                               dates,overwrite,family)
+      #}
       print(Sys.time() -aa)  
    }else{
       aa <- Sys.time()
@@ -202,6 +253,7 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
       print(Sys.time() -aa)  
       
    }
+   
    return(regrid_flag)
 }
 ### END OF PENTADAL
@@ -210,7 +262,7 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
 ############################################################################
 # DEKADAL FUNCTION
 ############################################################################
-makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite,regrid_flag,family){  
+makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_dekad,overwrite,regrid_flag,family,sep){  
    #---------------------------------------------------------------------------------
    # Function to turn daily data into dekadal data
    # Create directories if they don't already exist
@@ -226,9 +278,9 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
    if(!dir.exists(datasetdekaddireformat)){dir.create(datasetdekaddireformat)}
    
    subdirs <- paste(datasetdekaddir,list.dirs(paste(dir_data_remote_BGeoTif_daily,
-                                                            dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
-   subdirsref <- paste(datasetdekaddireformat,list.dirs(paste(dir_data_remote_BGeoTif_daily,
                                                     dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
+   subdirsref <- paste(datasetdekaddireformat,list.dirs(paste(dir_data_remote_BGeoTif_daily,
+                                                              dataset,sep=sep),full.names=FALSE,recursive=FALSE),sep=sep)
    for(n in 1:length(subdirs)){
       if(!dir.exists(subdirs[n])){dir.create(subdirs[n])}
       if(!dir.exists(subdirsref[n])){dir.create(subdirsref[n])}
@@ -256,6 +308,40 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
    fulldatelist <- dekadalmissing(dates,datasetdekaddir,missinglimitdekad)
    # make another file with all the dates
    
+   #==========================================================================================================================
+   # DEKADSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
+   #==========================================================================================================================
+   dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetdekaddir,dataset,files_in.daily,dates,overwrite,family){
+      require(Greatrex.Functions)
+      require(terra)
+      
+      #------------------------------------------------------------------------------
+      # get the dekad wanted and make the output file name
+      #------------------------------------------------------------------------------
+      dekadyear <- fulldatelist$dekadyear[n]
+      outputfile <- paste(datasetdekaddir,fulldatelist$year[n],paste(dataset,"_dekad_",dekadyear,".tif",sep=""),sep=sep)
+      
+      #------------------------------------------------------------------------------
+      # if the outputfile exists, male the input filename
+      #------------------------------------------------------------------------------
+      if((overwrite==TRUE)|(!file.exists(outputfile))){
+         inputfiles <- paste(dir_data_remote_BGeoTif_daily,dataset,
+                             files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
+                                                     dates$Date[dates$YearDekad %in% dekadyear])],sep=sep)
+         if(length(inputfiles) > 2){
+            
+            if(family %in% c("rain","tmin","tmax","rhum")){
+               suppressMessages(suppressWarnings(terra::writeRaster(round(mean(rast(inputfiles)),1), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            }else{
+               suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            } 
+         }
+      }
+      return(outputfile)
+   }
+   
+   
+   
    #------------------------------------------------------------------------------
    # and calculate the output and save to a new file
    #------------------------------------------------------------------------------
@@ -269,12 +355,12 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
                                                                     dates,overwrite,family)
    print(Sys.time() -aa)   
    #print(res)
-
+   
    
    #------------------------------------------------------------------------------
    # and calculate the output and save to a new file FOR REGRIDDED
    #------------------------------------------------------------------------------
-
+   
    if(regrid_flag){
       if(verbose %in% c(TRUE,"Limited")){message(paste("     Summing daily gridded to dekadal (this can take a while)"))}
       
@@ -282,13 +368,13 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
       files_in.dailyregrid   <- list.files(dir_reformat,recursive=TRUE)
       
       myresults <- foreach(nnn = 1:length(files_in.dailyregrid)) %dopar% dekadsumfunct(nnn,fulldatelist ,
-                                                                             dir_data_remote_BGeoTif_daily,
-                                                                             datasetdekaddireformat,
-                                                                             dataset_regrid,
-                                                                             files_in.dailyregrid,
-                                                                              dates,overwrite,family)
+                                                                                       dir_data_remote_BGeoTif_daily,
+                                                                                       datasetdekaddireformat,
+                                                                                       dataset_regrid,
+                                                                                       files_in.dailyregrid,
+                                                                                       dates,overwrite,family)
       
-   
+      
       
       
       print(Sys.time() -aa)  
@@ -306,7 +392,7 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
    }
    return(regrid_flag)   
    
- 
+   
 }
 ### END OF DEKADAL
 
@@ -316,14 +402,14 @@ makedekadal <-  function(dataset,datastem,missinglimitdekad,regrid_template,dir_
 ############################################################################
 
 
-makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite,regrid_flag,family){  
+makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite,regrid_flag,family,sep){  
    if(verbose %in% c(TRUE,"Limited")){message(paste("     Summing daily to monthly (this can take a while)"))}
    
    #---------------------------------------------------------------------------------
    # Function to turn daily data into monthly data
    # Create directories if they don't already exist
    #---------------------------------------------------------------------------------
- 
+   
    regridname <- substr(regrid_template,1,nchar(regrid_template)-4)
    dataset_regrid  <- paste(datastem,regridname,sep="_")
    dir_reformat <- paste(dir_data_remote_BGeoTif_daily,dataset_regrid,sep=sep)
@@ -347,7 +433,7 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
    #------------------------------------------------------------------------------
    # And find out the existing files
    #------------------------------------------------------------------------------
-
+   
    files_out.month <- list.files(datasetmonthdir,recursive=TRUE)
    files_out.month    <- files_out.month[grep(".tif",files_out.month)]
    
@@ -357,7 +443,7 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
    files_in.daily    <- list.files(paste(dir_data_remote_BGeoTif_daily,dataset,sep=sep),recursive=TRUE)
    files_in.daily    <- files_in.daily[grep(".tif",files_in.daily)]
    
-
+   
    
    #------------------------------------------------------------------------------
    # Now make a datelist by extracting the date from the filename
@@ -372,11 +458,46 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
    # and calculate the output and save to a new file
    #------------------------------------------------------------------------------
    
+   
+   
+   #==========================================================================================================================
+   # MONTHSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
+   #==========================================================================================================================
+   monthsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetmonthdir,dataset,files_in.daily,dates,overwrite,family,sep){
+      require(Greatrex.Functions)
+      require(terra)
+      
+      #------------------------------------------------------------------------------
+      # get the dekad wanted and make the output file name
+      #------------------------------------------------------------------------------
+      monthyear <- fulldatelist$monthyear[n]
+      outputfile <- paste(datasetmonthdir,fulldatelist$year[n],paste(dataset,"_month_",monthyear,".tif",sep=""),sep=sep)
+      
+      #------------------------------------------------------------------------------
+      # if the outputfile exists, male the input filename
+      #------------------------------------------------------------------------------
+      if((overwrite==TRUE)|(!file.exists(outputfile))){
+         inputfiles <- paste(dir_data_remote_BGeoTif_daily,dataset,
+                             files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
+                                                     dates$Date[dates$YearMonth %in% monthyear])],sep=sep)
+         
+         if(length(inputfiles) > 2){
+            if(family %in% c("rain","tmin","tmax","rhum")){
+               suppressMessages(suppressWarnings(terra::writeRaster(round(mean(rast(inputfiles)),1), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            }else{
+               suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
+            }
+         }   
+      }   
+      return(outputfile)
+   }
+   
+   
    aa <- Sys.time()
    res <- foreach(n = 1:nrow(fulldatelist)) %dopar% monthsumfunct(n,fulldatelist,dir_data_remote_BGeoTif_daily,
                                                                   datasetmonthdir,dataset,
                                                                   files_in.daily,dates,
-                                                                  overwrite,family)
+                                                                  overwrite,family,sep)
    print(Sys.time() -aa)   
    #print(res)
    
@@ -393,18 +514,18 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
       files_in.dailyregrid   <- list.files(dir_reformat,recursive=TRUE)
       
       myresults <- foreach(nnn = 1:length(files_in.dailyregrid)) %dopar% monthsumfunct(nnn,fulldatelist ,
-                                                                             dir_data_remote_BGeoTif_daily,
-                                                                             datasetmonthdireformat,
-                                                                             dataset_regrid,
-                                                                             files_in.dailyregrid,
-                                                                             dates,overwrite,family)
+                                                                                       dir_data_remote_BGeoTif_daily,
+                                                                                       datasetmonthdireformat,
+                                                                                       dataset_regrid,
+                                                                                       files_in.dailyregrid,
+                                                                                       dates,overwrite,family,sep)
       print(Sys.time() -aa)  
    }else{
       if(verbose %in% c(TRUE,"Limited")){message(paste("     Copying monthly to monthly gridded (this can take a while)"))}
       aa <- Sys.time()
       
       files_in.month <-  list.files(datasetmonthdir,recursive=TRUE)
-
+      
       Monthfilenamesout <- str_replace(files_in.month,"Geo",regridname)
       a<-file.copy(paste(datasetmonthdir,files_in.month,sep=sep),   
                    paste(datasetmonthdireformat,Monthfilenamesout,sep=sep),overwrite=FALSE)
@@ -419,12 +540,12 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
 
 #set up if you skipped the missing code
 if(!( "runmissing" %in% ls())){
-names(Data_Meta)[3] <- "Satellite"
-Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
-Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
-Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
-Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
-
+   names(Data_Meta)[3] <- "Satellite"
+   Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
+   Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
+   Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
+   Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
+   
 }
 
 
@@ -434,7 +555,7 @@ Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem
 # For each product
 #---------------------------------------------------------------------------------------
 for(n_data in 1:length(Daily_datasetlist$Stem)){
-
+   
    #---------------------------------------------------------------------------------------
    # Set up the meta data and get the input files
    #---------------------------------------------------------------------------------------
@@ -445,7 +566,7 @@ for(n_data in 1:length(Daily_datasetlist$Stem)){
    
    geo_stem <- paste(dir_data_remote_BGeoTif_daily,dataset,sep=sep)
    
-
+   
    # remove any spurious tif/aux files
    if(verbose %in% c(TRUE,"Limited")){message(paste("     Removing any spurious tif/aux files"))}
    suppressWarnings(suppressMessages(file.remove(list.files(geo_stem,recursive=TRUE,full.names=TRUE,include.dirs =TRUE)[
@@ -473,9 +594,9 @@ for(n_data in 1:length(Daily_datasetlist$Stem)){
    #---------------------------------------------------------------------------------------
    # THIS ALSO REFORMATS TO 0.1 DEGREE GRID MATCHING ARC2
    #---------------------------------------------------------------------------------------
-   pentadcreated <- makepentadal(dataset,datastem,regrid_template,dir_core,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite,family)
-   dekadcreated  <- makedekadal (dataset,datastem,missinglimitdekad,regrid_template,dir_core,dir_data_remote_BGeoTif_daily, dir_data_remote_BGeoTif_dekad,overwrite,regrid_flag=pentadcreated,family)
-   monthcreated  <- makemonthly (dataset,datastem,missinglimitmonth,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite,regrid_flag=pentadcreated,family)
+   pentadcreated <- makepentadal(dataset,datastem,regrid_template,dir_core,missinglimitpentad,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_pentad,overwrite,family,sep)
+   dekadcreated  <- makedekadal (dataset,datastem,missinglimitdekad,regrid_template,dir_core,dir_data_remote_BGeoTif_daily, dir_data_remote_BGeoTif_dekad,overwrite,regrid_flag=pentadcreated,family,sep)
+   monthcreated  <- makemonthly (dataset,datastem,missinglimitmonth,regrid_template,dir_core,dir_data_remote_BGeoTif_daily,dir_data_remote_BGeoTif_month,overwrite,regrid_flag=pentadcreated,family,sep)
    
    # files_in.daily    <- list.files(paste(dir_data_remote_BGeoTif_daily,dataset,sep=sep),recursive=TRUE)
    # files_in.daily    <- files_in.daily[grep(".tif",files_in.daily)]
