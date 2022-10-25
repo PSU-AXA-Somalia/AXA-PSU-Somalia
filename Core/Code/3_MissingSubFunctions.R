@@ -56,7 +56,7 @@ replacemissing <- function(missingdate,dataset,family,iridl,iri,dir_data_remote_
             fulladdress <- paste(prexyaddress,"/",timestuff,"/","data.nc",sep="")
          }
          
-         download.file(fulladdress,file.name,quiet=FALSE)
+         download.file(fulladdress,file.name,quiet=FALSE,method="auto")
          print(file.name)
       }else{
          if(verbose %in% c(TRUE,"Limited")){message(paste("\n ----------\n Already downloaded"))}

@@ -125,8 +125,11 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
     cranpackages <- rbind(cranpackages,c("rgdal" ,    "1.0.0"  ))
     
     githubpackages <- data.frame(Github="hgreatrex",Package="Greatrex.Functions",Version="0.1.1")
-    remotes::install_github("gearslaboratory/gdalUtils")
-    remotes::install_github("isciences/exactextractr")
+    githubpackages <- rbind(githubpackages,c(Github="gearslaboratory",Package="gdalUtils",version="0.1"))
+    githubpackages <- rbind(githubpackages,c(Github="isciences",Package="exactextractr",version="0.1"))
+    
+   
+    
     # TO DO NEED TO ADD THESE IN AND GRAB VERSION NUMBERS
 
     #---------------------------------------------------------------------------------
@@ -149,7 +152,6 @@ if((R.Version()$major < 4)|((R.Version()$major == 4)&(R.Version()$minor < 1))){
       if (any(remotes_installed_packages == FALSE)) {
         remotes_missing <- githubpackages[!remotes_installed_packages,]
 
-        
         for(n in 1:nrow(remotes_missing)){
           if(verbose){message(paste("           Installing package from Github:",paste(remotes_missing$Github[n],remotes_missing$Package[n],sep="/"),"\n"))}
           test <- try(remotes::install_github(paste(remotes_missing$Github[n],remotes_missing$Package[n],sep="/"),quiet=TRUE,force=TRUE,upgrade="never"),silent=TRUE)

@@ -80,7 +80,15 @@ if(verbose %in% c(TRUE,"Limited")){message(paste("\n     Writing Lat/Long/Dates"
 #---------------------------------------------------------------------------------
 testval <- round(mean(length(file_list.in)))
 suppressWarnings(rm(Dataset_Example))
-Dataset_Example <- suppressWarnings(terra::rast(paste("/vsigzip/",(file_list.in[testval]),sep=sep)))
+# need different versions depending if windows or not
+if(.Platform$OS.type %in% "windows"){
+   Dataset_Example <- suppressWarnings(rast(paste("/vsigzip/", stringr::str_replace_all(file_list.in[testval],"/","\\\\"),sep="")))
+}else{
+   Dataset_Example <- suppressWarnings(terra::rast(paste("/vsigzip/",(file_list.in[testval]),sep=sep)))
+   
+}
+
+
 suppressWarnings(crs(Dataset_Example) <- "EPSG: 4326")
 
 if(!(file.exists(paste(dir_data_in,sep, StemIn,"_Longitude.csv",sep="")))){
@@ -140,7 +148,14 @@ CreateCHIRTSTMax <- function(f,dir_data_in,StemIn,dir_data_out,StemOut,date.list
       
       # Read in and change the projection
       # a <- Sys.time()
-      r <- suppressWarnings(terra::rast(paste("/vsigzip/",file_name.in,sep=sep)))
+      
+      # need different versions depending if windows or not
+      if(.Platform$OS.type %in% "windows"){
+         r <- suppressWarnings(rast(paste("/vsigzip/", stringr::str_replace_all(file_name.in,"/","\\\\"),sep="")))
+      }else{
+         r <- suppressWarnings(terra::rast(paste("/vsigzip/",(file_name.in),sep=sep)))
+         
+      }
       suppressWarnings(crs(r) <- paste("EPSG:",globalcrs,sep=""))
       
       r[r < -90] <- NA

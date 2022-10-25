@@ -142,13 +142,18 @@ makepentadal <-  function(dataset,datastem,regrid_template,dir_core,missinglimit
          
          regridtemplate <- extend(regridtemplate,regrid_test)
          
-          
-         res <- foreach(nnn = 1:length(filenamesin)) %dopar%  suppressWarnings(try(gdalwarp(srcfile=paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily[nnn],sep=sep),
+         valid_install <- !is.null(getOption("gdalUtils_gdalPath"))
+         if(valid_install == TRUE){ 
+            if(verbose %in% c(TRUE,"Limited")){message(paste("     Using GDAL"))}
+            res <- foreach(nnn = 1:length(filenamesin)) %dopar%  suppressWarnings(try(gdalwarp(srcfile=paste(dir_data_remote_BGeoTif_daily,dataset,files_in.daily[nnn],sep=sep),
                                                                        dstfile=paste(dir_reformat,filenamesout[nnn],sep=sep),
                                                                        tr=res(regridtemplate),
                                                                        te=c(bbox(extent(regridtemplate))),
                                                                        r='bilinear',overwrite=FALSE,verbose=FALSE)))
-         
+         }else{
+            if(verbose %in% c(TRUE,"Limited")){message(paste("    STOPP!"))}
+            stop()
+         }
          if(family %in% c("rain","tmin","tmax","rhum")){
             myresults <- foreach(nnn = 1:length(filenamesin)) %dopar% terra::writeRaster(round(rast(paste(dir_reformat,filenamesout[nnn],sep=sep)),1), 
                                                                               filename=paste(dir_reformat,filenamesout[nnn],sep=sep), 
@@ -412,6 +417,15 @@ makemonthly <-  function(dataset,datastem,missinglimitmonth,regrid_template,dir_
 }
 ### END OF MONTHLY
 
+#set up if you skipped the missing code
+if(!( "runmissing" %in% ls())){
+names(Data_Meta)[3] <- "Satellite"
+Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
+Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
+Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
+Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
+
+}
 
 
 ##########################################################################################
