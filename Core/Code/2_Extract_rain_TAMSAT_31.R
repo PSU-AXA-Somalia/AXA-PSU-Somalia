@@ -1,18 +1,8 @@
 #=================================================================================
 # HLG 2021,
-# This converts raw RFE2 data to my standardised format
+# This converts raw TAMSAT data to my standardised format
 #=================================================================================
-# Dataset parameters
-#---------------------------------------------------------------------------------
-# family    <-"rain"  ;  dataset   <- "RFE2"
-# version   <- 1      ;  modified  <- "Raw"
-# overwrite <- FALSE
-
-##################################################################
-
 setwd(dir_core)
-
-#Daily/Dekadal/Pentadal/Monthly raw data
 OutFolder_Route <- dir_data_remote_BGeoTif_daily
 
 #Does this dataset contain multiple sub-variables?
@@ -20,9 +10,6 @@ nvariables <- 1
 
 #---------------------------------------------------------------------------------
 # Sort out input folder the meta data
-# StemIn  is rain_RFE2_1_Raw
-# StemOut is rain_RFE2_1_Geo
-# dir_data_in is "~/Desktop/SOMALIA_CODE/Core/Data/2_Remote_Sensing/0_Raw_data/rain_RFE2_1_Raw"
 #---------------------------------------------------------------------------------
 if((nchar(modified) > 0)&(is.na(modified)==FALSE)){
    StemIn  <- paste(family,dataset,version,modified,"Raw",sep="_")
@@ -118,6 +105,9 @@ allfile_list.in <- list.files(dir_data_in,pattern=".nc",recursive=FALSE)
 date.list <- as.Date(substr(allfile_list.in,4,13),format="%Y_%m_%d")
 years <- sort(unique(as.numeric(format.Date(date.list,"%Y"))))
 months <- sort(unique(format.Date(date.list,"%m")))
+
+if(verbose %in% c(TRUE,"Limited")){message(paste("\n   Moving files into annual files. Should be a one off"))}
+
 
 for(y in seq_along(years)){
    conditionalcreate(paste(TAMSATdatadir,years[y],sep=sep))

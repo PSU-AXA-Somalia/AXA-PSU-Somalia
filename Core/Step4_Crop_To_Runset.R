@@ -17,7 +17,7 @@
   #  What do you want to call your runset? E.g. what should the folder be called?
   #  If you want to auto-name from the shapefile/bounding box, then put as NA
   #---------------------------------------------------------------------------------------
-   Runset <- "Gedo"
+   Runset <- "South_Somalia"
  
   #---------------------------------------------------------------------------------------
   # SaveAnalysis 
@@ -28,23 +28,11 @@
    SaveAnalysis <- TRUE
  
   #---------------------------------------------------------------------------------------
-  # Output folder override
-  # 
-  # This code will assume that the output folders in your runset are named as per 0_Global_Parameters. 
-  # To see what these are - copy these 3 lines of code into the console (without the trailing zeros) 
-  #    source("Step0_Global_Parameters.R")
-  #    paste("Raw Output folder name:",runset_foldername_rawoutput)
-  #    paste("Visualisation folder name: ",runset_foldername_visualise)
-  #
-  # IF THIS IS INCORRECT AND YOUR WANT YOUR OUTPUT TO BE SAVED, please update the names here (in quote marks)
-  # IF YOU ARE HAPPY, LEAVE AS NA   
+  # RUNSET Remote Sensing data location
+  # If want to  store the data elsewhere, add the address here
+  # Else set to NA for auto
   #---------------------------------------------------------------------------------------
-   override_analysisfoldername <- NA
-   override_visualisationfoldername <- NA
-   
-   # Override the data location? DO NOT TOUCH THIS FOR NOW!
-   #https://workflowy.com/#/4f9e026a8440
-   dir_data_runset_override <- paste(dir_runset,Runset,"Data",sep=sep)  
+   dir_data_runset_override <- NA
    
     
 #=========================================================================================
@@ -54,7 +42,7 @@
   # SubsetOption: Where do you want to subset to?  
   #    A box [1] or to the borders of a shapefile/subset of one? [2]
   #---------------------------------------------------------------------------------------
-    SubsetOption <- 2
+    SubsetOption <- 1
 
        #----------------------------------------------------------------------------------
        # IF OPTION 1 (box) - Else set each to NA
@@ -64,8 +52,9 @@
        #  Add in degrees the width of the buffer/border/margin 
        #  Else set to 0.
        #----------------------------------------------------------------------------------
-         Box.MinLong <- 40.5   ;   Box.MaxLong <- 45
-         Box.MinLat  <- 1  ;   Box.MaxLat  <- 5.25
+         Box.MinLong <- 40.5   ;   Box.MaxLong <- 46.25
+         Box.MinLat  <- -2  ;   Box.MaxLat  <- 5.75
+         
 
          Box.buffer  <- 0.2
 
@@ -94,14 +83,14 @@
          #  Shapefile.ColValue
          #    What value in this column indicates your subset? (else set to NA)
          #----------------------------------------------------------------------------------
-           Shapefile.Folder <- paste(dir_data_shape,"gadm36_SOM_shp",sep=sep)  
-           Shapefile.Name   <- "gadm36_SOM_1" 
+           Shapefile.Folder <- paste(dir_data_shape,"gadm41_PAK_shp",sep=sep)  
+           Shapefile.Name   <- "gadm41_PAK_1" 
            
            Shapefile.croptype <- "box"
            Box.buffer  <- 0.2
            
-           Shapefile.ColName  <- "NAME_1"
-           Shapefile.ColValue <- "Gedo"  
+           Shapefile.ColName  <- NA#"NAME_1"
+           Shapefile.ColValue <- NA#"Gedo"  
 
            
 #=========================================================================================

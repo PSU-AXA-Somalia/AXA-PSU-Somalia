@@ -1,13 +1,12 @@
 ##########################################################################################
-# STEP3_TemporalSum: THIS WILL REFORMAT ALL PRODUCTS TO A STANDARD GEOTIF
-# HLG 2021-10-31, 
-# v6. It will also now fill in missing data with blanks and regrid to a standard grid
-#  
+# STEP3_TemporalSum
+#
 # This script will temporally average the satellite data to pentadal, dekadal and monthly
-# formats.  You should be running R-Studio using the R project
+# formats.  It will also now fill in missing data with blanks and regrid to a standard grid.
 ##########################################################################################
-
 rm(list=ls())
+
+# The next updates will be to make availability plots and a selection of grids
 
 #========================================================================================= 
 # GENERAL PARAMETERS, ANSWER THESE QUESTIONS  
@@ -56,187 +55,20 @@ rm(list=ls())
   #---------------------------------------------------------------------------------------
    source("Step0_Global_Parameters.R")
 
-  #------------------------------------------------------------------------------------------
-  # Find out which daily datasets there are
-  # If you want to edit the datasets being updated, you can change Daily_datasetlist (not recommended)
-  #------------------------------------------------------------------------------------------
-   Daily_datasetlist  <-  list.files(dir_data_remote_BGeoTif_daily)
-   Daily_datasetlist <- Daily_datasetlist[grep("Geo",Daily_datasetlist)]
-   Data_Meta <- read.csv("Step0_Datasets.csv")
-   names(Data_Meta)[3] <- "Satellite"
-   Data_Meta$Stem <- paste(Data_Meta$Family,Data_Meta$Satellite,as.numeric(Data_Meta$Version),sep="_")
-   Daily_datasetlist  <- data.frame(Dataset = Daily_datasetlist, Stem=NA)
-   Daily_datasetlist$Stem <- substr(Daily_datasetlist$Dataset,1,(unlist(lapply(gregexpr('_', Daily_datasetlist$Dataset),"[",3))-1))
-   Daily_datasetlist <- suppressWarnings(merge(Daily_datasetlist,Data_Meta,by="Stem",all.x=TRUE,all.y=FALSE))
-   Daily_datasetlist <- Daily_datasetlist[-5,]
-
    #------------------------------------------------------------------------------------------
-   # Run the code
+   # Run the missing data code
    #------------------------------------------------------------------------------------------
-   #source(paste(dir_code,"3_MissingSubFunctions.R",sep=sep))
-   #source(paste(dir_code,"3_MissingReplace.R",sep=sep))
+   source(paste(dir_code,"3_MissingReplace.R",sep=sep))
    
-   
-   
-   source(paste(dir_code,"3b_TemporalSumFunctionsSub.R",sep=sep))
+   #------------------------------------------------------------------------------------------
+   # Run the temporal sum code
+   #------------------------------------------------------------------------------------------
    source(paste(dir_code,"3_TemporalSumFunctions.R",sep=sep))
    
    #------------------------------------------------------------------------------------------
    # Tidy up
    #------------------------------------------------------------------------------------------
    setwd(dir_core)
-   
-   # rerun for rhum
    rm(list=ls())
-   
-   
-   ##########################################################################################
-   # STEP2a_Crop_To_Runset: CROP TO RUNSET AREA
-   # HLG 2021-10-30, V1
-   #  
-   # This script will help you crop to a smaller area and create the runset folder
-   ##########################################################################################
-   rm(list=ls())
-   Data_Meta <- read.csv("Step0_Datasets.csv")
-   source("Step0_Global_Parameters.R")
-   
-   #=========================================================================================
-   # GENERAL PARAMETERS - ANSWER THESE QUESTIONS
-   #=========================================================================================
-   #---------------------------------------------------------------------------------------
-   # Runset name. 
-   #  What do you want to call your runset? E.g. what should the folder be called?
-   #  If you want to auto-name from the shapefile/bounding box, then put as NA
-   #---------------------------------------------------------------------------------------
-   Runset <- "Gedo"
-   
-   #---------------------------------------------------------------------------------------
-   # SaveAnalysis 
-   #   IF you want to overwrite to the same runset name, do you want to save your past analysis?  
-   #   TURN SaveAnalysis off if you have already run this code to save a backup of your work 
-   #   or it will keep making copies (up to 5 times)
-   #---------------------------------------------------------------------------------------
-   SaveAnalysis <- TRUE
-   
-   #---------------------------------------------------------------------------------------
-   # Output folder override
-   # 
-   # This code will assume that the output folders in your runset are named as per 0_Global_Parameters. 
-   # To see what these are - copy these 3 lines of code into the console (without the trailing zeros) 
-   #    source("Step0_Global_Parameters.R")
-   #    paste("Raw Output folder name:",runset_foldername_rawoutput)
-   #    paste("Visualisation folder name: ",runset_foldername_visualise)
-   #
-   # IF THIS IS INCORRECT AND YOUR WANT YOUR OUTPUT TO BE SAVED, please update the names here (in quote marks)
-   # IF YOU ARE HAPPY, LEAVE AS NA   
-   #---------------------------------------------------------------------------------------
-   override_analysisfoldername <- NA
-   override_visualisationfoldername <- NA
-   
-   # Override the data location? DO NOT TOUCH THIS FOR NOW!
-   #https://workflowy.com/#/4f9e026a8440
-   dir_data_runset_override <- paste(dir_runset,Runset,"Data",sep=sep)  
-   
-   
-   #=========================================================================================
-   # SPATIAL CROP OPTIONS - ANSWER THESE QUESTIONS
-   #=========================================================================================
-   #---------------------------------------------------------------------------------------
-   # SubsetOption: Where do you want to subset to?  
-   #    A box [1] or to the borders of a shapefile/subset of one? [2]
-   #---------------------------------------------------------------------------------------
-   SubsetOption <- 2
-   
-   #----------------------------------------------------------------------------------
-   # IF OPTION 1 (box) - Else set each to NA
-   # Add your box coordinates here in lat/long 
-   #
-   # If you want a buffer around your box for plots, 
-   #  Add in degrees the width of the buffer/border/margin 
-   #  Else set to 0.
-   #----------------------------------------------------------------------------------
-   Box.MinLong <- 40.5   ;   Box.MaxLong <- 45
-   Box.MinLat  <- 1  ;   Box.MaxLat  <- 5.25
-   
-   Box.buffer  <- 0.2
-   
-   #----------------------------------------------------------------------------------
-   # IF OPTION 2 (Shapefile) - Else set each to NA
-   #
-   # Shapefile.Folder
-   #   Add the location  on your computer of the shapefiles, 
-   #
-   # Shapefile.Folder
-   #   Add the name  of the shapefile
-   #
-   # Shapefile.croptype (choose "box)
-   #   Exact subset cropped to shapefile border? ["exact"]  [FUTURE]
-   #   Or box around that shapefile? ["box"]  [THIS ONE WORKS]
-   # 
-   # If you want a buffer around your box for plots, 
-   #   Add in degrees the width of the buffer/border/margin
-   #
-   # OPTIONAL - if you want use only part of a shapefile for this (say one region)
-   #    
-   #
-   #  Shapefile.ColName
-   #    What column should I look for the subset in? (else set to NA)
-   #
-   #  Shapefile.ColValue
-   #    What value in this column indicates your subset? (else set to NA)
-   #----------------------------------------------------------------------------------
-   Shapefile.Folder <- paste(dir_data_shape,"gadm36_SOM_shp",sep=sep)  
-   Shapefile.Name   <- "gadm36_SOM_1" 
-   
-   Shapefile.croptype <- "box"
-   Box.buffer  <- 0.2
-   
-   Shapefile.ColName  <- "NAME_1"
-   Shapefile.ColValue <- "Gedo"  
-   
-   
-   #=========================================================================================
-   # All Products? [ALL] or just certain ones? (make vector)
-   # Run  list.files(dir_data_remote_BGeoTif_daily,pattern="Grid",recursive=FALSE)
-   #  to see what they are           
-   #=========================================================================================
-   ProductChoice <- c("rain_CHIRPS_2",
-                      "tmax_CHIRTS_1",
-                      "tmin_CHIRTS_1",
-                      "rain_RFE2_1",
-                      "rain_TAMSAT_3.1",
-                      "sm_TAMSAT_1_smc_avail_top",
-                      "sm_TAMSAT_1_smcl_1",
-                      "sm_TAMSAT_1_smcl_2",
-                      "sm_TAMSAT_1_smcl_3",
-                      "sm_TAMSAT_1_smcl_4",
-                      "sm_TAMSAT_1_MeanColumnSoilMoisture")        
-   
-   
-   #=========================================================================================
-   # RUN CODE
-   # Highlight everything in this script and press Run All
-   #=========================================================================================
-   source(paste(dir_code,"4_Crop_To_Runset_code.R",sep=sep))
-   
-   
-   #=========================================================================================
-   # Hint! 
-   #  
-   #  If you're not sure how to find the column/value of your region in the shapefile,
-   #  Use this command in the console to read in a shapefile of your choice and take a look
-   #    quickcheck <- (sf::st_read(file.choose())); head(quickcheck)
-   #
-   #  You can then use the table command to see the potential regions e.g.
-   #  table(quickcheck$NAME_1)
-   #  THIS IS CASE SENSITIVE
-   # 
-   #  And tmap's QTM to make a quick plot of that column
-   #  tmap:qtm(quickcheck,fill="NAME_1")
-   #=========================================================================================
-   
-   
-   
-   
    
    

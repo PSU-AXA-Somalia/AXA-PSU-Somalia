@@ -3,12 +3,7 @@
 # HLG 2021-10-30, V16
 #  
 # All the satellite data comes in its own unique formats with its own unique quirks
-# This code takes all of that and makes it a standardized GeoTif that can be used in the
-# rest of the code.
-#
-# YOU SHOULD HAVE OPENED R-STUDIO BY DOUBLE CLICKING Step0_Core_PROJECTFILE.Rproj
-# At the top of your screen, it should say "Core - R-Studio" & the files tab should be looking in the main folder. 
-# If not, close R-Studio and reopen correctly
+# This code takes all of that and makes it a standardized GeoTif 
 #
 ##########################################################################################
 #-----------------------------------------------------------------------------------------
@@ -33,7 +28,8 @@
    # (missing scripts will simply be ignored)
    #--------------------------------------------------------------------------------------
      Data_Meta <- read.csv("Step0_Datasets.csv")
-     print(Data_Meta)
+     message("Running these sub-scripts")
+     print(Data_Meta[,1:6])
  
 #=========================================================================================
 # Select the entire script and press Run All

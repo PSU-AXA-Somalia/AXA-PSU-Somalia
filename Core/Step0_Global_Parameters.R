@@ -28,7 +28,7 @@ globalparams_lastupdated <- as.Date("2022-06-11")
    # If your R version is struggling to install updates, try turning auto_update_package <- FALSE
    #---------------------------------------------------------------------------------
     use_github_repos     <- TRUE    
-    auto_update_packages <- FALSE
+    auto_update_packages <- TRUE
     
     #---------------------------------------------------------------------------------
     # Are you running on a supercomputer/HPC platform? TRUE
@@ -37,15 +37,22 @@ globalparams_lastupdated <- as.Date("2022-06-11")
     PSUSuperComputer <- FALSE
     
     #---------------------------------------------------------------------------------
-    # Remote data?
-    # If you are storing the data elsewhere, add the address here
-    # It will still assume the code is in this folder structure.
-    # Else set to NA
+    # Remote Sensing data location
+    # If you are storing the data elsewhere, add the address here. 
+    # DO NOT ADD A TRAILING /
+    # Else set to NA for auto
     #---------------------------------------------------------------------------------
-#    RemoteData <- "/Volumes/Mac storage space/Work/Somalia/AXA-PSU-Somalia/Core/Data"
+    RemoteData  <- "../TESTData"
+    RemoteData  <- "/Volumes/satellite/Somalia/AXA-PSU-Somalia/Core/Data"
     
-    RemoteData <-  "C:/Users/hlg5155/Documents/Github/AXA-PSU-Somalia/TESTData"
+    #---------------------------------------------------------------------------------
+    # Remote Shapefile data location
+    # If you are storing the data elsewhere, add the address here
+    # Else set to NA for auto
+    #---------------------------------------------------------------------------------
+    RemoteShape <-  "/Volumes/satellite/Somalia/AXA-PSU-Somalia/Core/Data/1_Shapefiles"
     
+   
 #================================================================================================================
 # 2. SPATIAL - defaults are probably fine here
 #================================================================================================================

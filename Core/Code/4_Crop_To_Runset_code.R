@@ -1,184 +1,204 @@
 
-# this code is linked to Step2a_Crop_To_Runset.R in the main code folder.
-
 #===============================================================================
-# SET UP RUNSET FILES
+# 1. SET UP RUNSET FOLDER
 #===============================================================================
-#---------------------------------------------------------------------------------
-# Create Runset folder name
-#---------------------------------------------------------------------------------
-if(is.na(Runset)){
-   if(Option == 1){
-      Runset <- paste("BOX",round(MinLong,3),round(MaxLong,3),
-                      round(MinLat,3),round(MaxLat,3),sep="_") 
-   }else{
-      if(is.na(column_value)){
-         Runset <- paste(Shapefile.Name,croptype,sep="_")
-      }else{
-         Runset <- paste(column_value,croptype,sep="_")
-      }
-   }
-}
+ #----- Create Runset folder name, auto name as required
+ if(is.na(Runset)){
+    if(Option == 1){
+       Runset <- paste("BOX",round(MinLong,3),round(MaxLong,3),round(MinLat,3),round(MaxLat,3),sep="_") 
+    }else{
+       if(is.na(column_value)){Runset <- paste(Shapefile.Name,croptype,sep="_")}else{Runset <- paste(column_value,croptype,sep="_")}
+    }
+ }
 
-
-#---------------------------------------------------------------------------------
-# And create main folder
-#---------------------------------------------------------------------------------
-dir_runset     <- paste(dir_main,"Runset",Runset,sep=sep)
-conditionalcreate(dir_runset)
-if(verbose){message(paste("Setting up file structures in",dir_runset))}
-
-#---------------------------------------------------------------------------------
-# Check that the output folders don't have special names
-#---------------------------------------------------------------------------------
-if(is.na(override_analysisfoldername==FALSE)){
-   dir_analysis_raw    <- paste(dir_runset,runset_foldername_rawoutput,sep=sep)
-}else{
-   if(verbose){message(paste("Overriding output folder names"))}
-   dir_analysis_raw    <- paste(dir_runset,override_analysisfoldername,sep=sep)
-   runset_foldername_rawoutput <- override_analysisfoldername
-} 
-
-if(is.na(override_visualisationfoldername==FALSE)){
-   dir_analysis_vis    <- paste(dir_runset,runset_foldername_visualise,sep=sep)
-}else{
-   if(verbose){message(paste("Overriding visualisation folder names"))}
-   dir_analysis_vis    <- paste(dir_runset,override_visualisationfoldername,sep=sep)
-   runset_foldername_visualise <-  override_visualisationfoldername 
-} 
-
-if(verbose){message("  1. Creating runset parameters, saved as Step0_Runset_Parameters.R")}
-
-
-
-
-#---------------------------------------------------------------------------------
-# Get satellite file names, either everything or a subset as necessary
-#---------------------------------------------------------------------------------
-if(tolower(ProductChoice[1]) == "all"){
-   stop("This is going to break, i don't have pentad/dekad.=/month files")
-   #tweak https://workflowy.com/#/8922249974a7
-   
-   # add in bit to remove products HERE that are out of bounds
-   
-   if(verbose %in% c(TRUE,"Limited")){message(paste("  Making a list of daily files gridded to 10km"))}
-   aa <- Sys.time()
-   products_daily  <-  list.files(dir_data_remote_BGeoTif_daily,pattern="Grid",recursive=FALSE)
-   products_daily_files <- foreach(n = 1:length(products_daily) ) %dopar% list.files(paste(dir_data_remote_BGeoTif_daily, products_daily[n],sep="/"),pattern="_",recursive=TRUE)
-   if(verbose %in% c(TRUE,"Limited")){ print(Sys.time() -aa)}
-   
-   if(verbose %in% c(TRUE,"Limited")){message(paste("  Making a list of pentadal,dekadal and monthly files"))}
-   products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern=".tif",recursive=TRUE)
-   products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern=".tif",recursive=TRUE)
-   products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern=".tif",recursive=TRUE)
-   if(verbose %in% c(TRUE,"Limited")){ print(Sys.time() -aa)}
-   
-}else{
-   # WF_TWEAK 3.3.4 add in bit to remove products HERE that are out of bounds
-   # https://workflowy.com/#/6ed462f0b79e
-   
-   if(verbose %in% c(TRUE,"Limited")){message(paste("  Making a list of daily files in your subset"))}
-   aa <- Sys.time()
-   products_daily  <-  list.files(dir_data_remote_BGeoTif_daily,pattern="Grid",recursive=FALSE)
-   products_daily  <-  products_daily[grepl( paste(ProductChoice, collapse = "|"),products_daily)]
-   products_daily_files <- foreach(n = 1:length(products_daily) ) %dopar% list.files(paste(dir_data_remote_BGeoTif_daily, products_daily[n],sep="/"),pattern="_",recursive=TRUE)
-   products_daily_files <- unlist(products_daily_files)
-   if(verbose %in% c(TRUE,"Limited")){ print(Sys.time() -aa)}
-
-   if(verbose %in% c(TRUE,"Limited")){message(paste("  Making a list of pentadal,dekadal and monthly files"))}
-   products_pentad  <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="Grid",recursive=FALSE)
-   products_pentad  <-  products_pentad[grepl( paste(ProductChoice, collapse = "|"),products_pentad)]
-   products_pentad_files <- foreach(n = 1:length(products_pentad) ) %dopar% list.files(paste(dir_data_remote_BGeoTif_pentad, products_pentad[n],sep="/"),pattern="_",recursive=TRUE)
-   products_pentad_files <- unlist(products_pentad_files)
-   
-   products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="Grid",recursive=FALSE)
-   products_dekad  <-  products_dekad[grepl( paste(ProductChoice, collapse = "|"),products_dekad)]
-   products_dekad_files <- foreach(n = 1:length(products_dekad) ) %dopar% list.files(paste(dir_data_remote_BGeoTif_dekad, products_dekad[n],sep="/"),pattern="_",recursive=TRUE)
-   products_dekad_files <- unlist(products_dekad_files)
-   
-   products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="Grid",recursive=FALSE)
-   products_month  <-  products_month[grepl( paste(ProductChoice, collapse = "|"),products_month)]
-   products_month_files <- foreach(n = 1:length(products_month) ) %dopar% list.files(paste(dir_data_remote_BGeoTif_month, products_month[n],sep="/"),pattern="_",recursive=TRUE)
-   products_month_files <- unlist(products_month_files)
-   
-   
-   if(verbose %in% c(TRUE,"Limited")){ print(Sys.time() -aa)}
-   
-}
+ #----- Create main folders
+ dir_runset <- paste(dir_main,"Runset",Runset,sep=sep)
+ conditionalcreate(dir_runset)
+ if(verbose){message(paste("Setting up file structures in",dir_runset))}
  
-
-#---------------------------------------------------------------------------------
-# Read in and store runset parameters, editing as necessary
-#---------------------------------------------------------------------------------
-LocalParamsWrapper <- readLines("Step0_Global_Parameters.R")
-
-# Show what runset it is
- LocalParamsWrapper[[3]] <- paste("# RUNSET PARAMETERS, Runset name:",Runset)
-
-# Add in date updated
-LocalParmsLine3 <- grep("runsetparamdate_DONOTDELETE",LocalParamsWrapper)
-LocalParamsWrapper[LocalParmsLine3] <- paste("runsetparams_lastupdated <- as.Date(\"",Sys.Date(),"\")",sep="")
-
-# Add in new setupfile updated
-LocalParmsLine4 <- grep("Step0_Global_SetUp",LocalParamsWrapper)
-LocalParamsWrapper[LocalParmsLine4] <- str_replace(LocalParamsWrapper[LocalParmsLine4],"Step0_Global_SetUp","Step0_Runset_SetUp")
-
-
-# write out full thing  
-write_lines(LocalParamsWrapper[[1]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep))
-for (m in 2:length(LocalParamsWrapper)){
-   write_lines(LocalParamsWrapper[[m]],file=paste(dir_runset,"Step0_Runset_Parameters.R",sep=sep),append=TRUE)
-}  
-
-
-#---------------------------------------------------------------------------------
-# Read in and store runset setup, editing as necessary
-# TWEAK 5 THIS IS BROKEN - https://workflowy.com/#/89d905d8b69c
-#---------------------------------------------------------------------------------
-LocalParams        <- readLines("Step0_Global_SetUp.R")
-
-# Switch core to runset name
-projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
-newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
-
-LocalParmsLineproj <- grep(projfile,LocalParams)
-for(L in 1:length(LocalParmsLineproj)){
-   LocalParams[LocalParmsLineproj[L]] <- str_replace(LocalParams[LocalParmsLine4],projfile,newprojfile)
-}
-
-LocalParmsLineproj <- grep("dir_main",LocalParams)
-LocalParams[LocalParmsLineproj[1]] <- "  dir_main <- substr(getwd(),start=1,stop=nchar(getwd()))"
-
-
- # Switch core to runset name
-  LocalParams[min(grep("dir_core",LocalParams))] <- paste("dir_core        <-   paste(dir_main,", "\"","../../Core", "\"",",sep=sep)" ,sep="")
-  LocalParams[min(grep("dir_runset",LocalParams))] <- paste("dir_runset        <- paste (dir_main,", "\"","../Runset", "\"",",sep=sep)" ,sep="")
+ 
+ #===============================================================================
+ # 2. SET UP SPATIAL EXTENT/BOX AND GET DATASETS AND A SAMPLE FILE
+ #===============================================================================
+ if(verbose){message("  1. Selecting data products")}
+ 
+ # List all the available products
+ #--------------------------------------------------------------------------------
+  products_daily  <-  list.files(dir_data_remote_BGeoTif_daily,pattern="Grid",recursive=FALSE)
+  products_pentad <-  list.files(dir_data_remote_BGeoTif_pentad,pattern="Grid",recursive=FALSE)
+  products_dekad  <-  list.files(dir_data_remote_BGeoTif_dekad,pattern="Grid",recursive=FALSE)
+  products_month  <-  list.files(dir_data_remote_BGeoTif_month,pattern="Grid",recursive=FALSE)
+ 
+  #--------------------------------------------------------------------------------
+  # Just choose subset as needed
+  #--------------------------------------------------------------------------------
+  if(tolower(ProductChoice[1]) != "all"){
+    products_daily   <-  products_daily[grepl( paste(ProductChoice, collapse = "|"),products_daily)]
+    products_pentad  <-  products_pentad[grepl( paste(ProductChoice, collapse = "|"),products_pentad)]
+    products_dekad  <-  products_dekad[grepl( paste(ProductChoice, collapse = "|"),products_dekad)]
+    products_month  <-  products_month[grepl( paste(ProductChoice, collapse = "|"),products_month)]
+  }
+ 
   
- # Makr runset output folders
-  LocalParmsLine1 <- grep("runset_foldername_rawoutput",LocalParams)
-  LocalParams[LocalParmsLine1] <- paste("dir_analysis_raw <- paste(dir_main, \"",runset_foldername_rawoutput," \",sep=sep)",sep="")
-
-  LocalParmsLine2 <- grep("runset_foldername_visualise",LocalParams)
-  LocalParams[LocalParmsLine2] <- paste("dir_analysis_vis <- paste(dir_main, \"",runset_foldername_visualise," \",sep=sep)",sep="")
-
+  #--------------------------------------------------------------------------------
+  # Get standard CRS
+  #--------------------------------------------------------------------------------
+  samplefile <- raster(list.files(paste(dir_data_remote_BGeoTif_daily,products_daily[1],sep=sep),
+                                recursive=TRUE,full.names=TRUE,include.dirs = TRUE,pattern=".tif")[1])
+  samplefileterra <- rast(list.files(paste(dir_data_remote_BGeoTif_daily,products_daily[1],sep=sep),
+                                  recursive=TRUE,full.names=TRUE,include.dirs = TRUE,pattern=".tif")[1])
   
-# write out full thing  
-write_lines(LocalParams[[1]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep))
-for (m in 2:length(LocalParams)){
-  write_lines(LocalParams[[m]],file=paste(dir_runset,"Step0_Runset_Setup.R",sep=sep),append=TRUE)
-}  
+ #===============================================================================
+ # CHECK THE PARAMETERS.
+ #===============================================================================
+  #--------------------------------------------------------------------------------
+  # If the user chose a box
+  #--------------------------------------------------------------------------------  
+  if(SubsetOption == 1){
+    if(verbose){message(paste("      a. Cropping to a box:",Box.MinLong,"to",Box.MaxLong,",",Box.MinLat,"to",Box.MaxLat))}
+    newbox <- st_bbox(c(xmin = Box.MinLong, xmax = Box.MaxLong, ymin = Box.MinLat, ymax = Box.MaxLat), 
+                      crs = st_crs(samplefile))
+    newbox <- st_bbox(extend(extent(newbox),Box.buffer),crs = st_crs(samplefile))
+    
+    # Get a terra version
+    terrabbox <- ext(as.numeric(newbox$xmin),
+                     as.numeric(newbox$xmax),
+                     as.numeric(newbox$ymin),
+                     as.numeric(newbox$ymax))
+  }
+ 
+  #--------------------------------------------------------------------------------
+  # If the user chose a shapefile
+  #--------------------------------------------------------------------------------  
+  if(SubsetOption %in% 2){
+    if(verbose){message(paste("      a. Using shapefile",Shapefile.Name,"to crop"))}
+
+    # remove any spurious ".shps" in the file name 
+    if(substr(Shapefile.Name,nchar(Shapefile.Name)-3,nchar(Shapefile.Name)) == ".shp"){
+       Shapefile.Name <- substr(Shapefile.Name,1,nchar(Shapefile.Name)-4)
+    }
+     
+    # and check it exists 
+    if(!file.exists(paste(Shapefile.Folder,"/",Shapefile.Name,".shp",sep=""))){stop("Your shapefile does not exist")}
+    
+    # read in the boundary shapefile
+    boundary <- suppressMessages(suppressWarnings(st_read(Shapefile.Folder,Shapefile.Name,quiet=TRUE)))
+    boundary <- st_transform(boundary,st_crs(samplefile))
+    
+    # and choose just the region if selected
+    if(is.na(Shapefile.ColName) == FALSE){
+       if(verbose){message(paste("      b. Subsetting shapefile to polygons where",Shapefile.ColName,"=",Shapefile.ColValue))}
+       colloc <- which(toupper(names(boundary)) %in% toupper(Shapefile.ColName))
+
+       # check if the requested column name exists       
+       if(!(Shapefile.ColValue %in% unique(st_drop_geometry(boundary)[,colloc]))){
+          print(cat(paste("There is no value of ",Shapefile.ColValue,"in the shapefile column",Shapefile.ColName, "\n Please choose out of:\n")))
+          print(unique(st_drop_geometry(boundary)[,colloc]))
+          stop()
+       }
+       # Select outer boundary
+       boundary <- boundary %>% dplyr::filter_at(colloc, dplyr::all_vars(. == Shapefile.ColValue))
+    }
+    
+    # Select outer boundary
+    if(toupper(Shapefile.croptype) == "BOX"){
+       if(verbose){message("      a. Using a box around the shapefile to subset the data to:")}
+       newbox <- st_bbox(extend(extent(boundary),Box.buffer),crs = st_crs(samplefile))
+    }else{
+       newbox <- boundary
+    }
+    terrabbox <- ext(as.numeric(newbox$xmin),
+                     as.numeric(newbox$xmax),
+                     as.numeric(newbox$ymin),
+                     as.numeric(newbox$ymax))
+  }  
+ 
+ 
+  #===============================================================================
+  # Check list is fully appropriate e.g. the spatial extents overlap.
+  # Remove datasets that don't overlatp
+  #===============================================================================
+  toremove <- NA
+  for(myfile in 1:length(products_daily)){
+     # read in a test file
+      testfile <- rast(list.files(paste(dir_data_remote_BGeoTif_daily,products_daily[myfile],"2002",sep="/"),
+                                  pattern="_",recursive=TRUE,include.dirs = TRUE,full.names=TRUE)[1])
+
+      # does the file exist?
+      if(relate(testfile,terrabbox,"intersects")){
+         #Might be an issue with half and half
+      }else{
+         if(verbose){message(paste("       ",products_daily[myfile],"Ignoring: no overlap"))}
+         toremove <- c(toremove,products_daily[myfile])
+      }
+  }
+  
+  # sort out file list again.
+  products_daily <- products_daily[!(products_daily %in% toremove)]
+  products_pentad <- products_pentad[!(products_pentad %in% paste("pentad",toremove,sep="_"))]
+  products_dekad <- products_dekad[!(products_pentad %in% paste("dekad",toremove,sep="_"))]
+  products_month <- products_month[!(products_pentad %in% paste("month",toremove,sep="_"))]
+  
+  #===============================================================================
+  # Then get list of files in each folder left.
+  #===============================================================================
+  
+  if(verbose){message("  2. Getting input file names")}
+  
+  # Get list of daily files in each one
+  products_daily_files <- unlist(
+     foreach(n = 1:length(products_daily)) %dopar% list.files(
+        paste(dir_data_remote_BGeoTif_daily, products_daily[n], sep = "/"),
+        pattern ="_",recursive = TRUE))
+  
+  products_pentad_files <- unlist(
+     foreach(n = 1:length(products_pentad)) %dopar% list.files(
+        paste(dir_data_remote_BGeoTif_pentad, products_pentad[n], sep = "/"),
+        pattern ="_",recursive = TRUE))
+  
+  products_dekad_files <- unlist(
+     foreach(n = 1:length(products_dekad)) %dopar% list.files(
+        paste(dir_data_remote_BGeoTif_dekad, products_dekad[n], sep = "/"),
+        pattern = "_",recursive = TRUE))
+  
+  products_month_files <- unlist(
+        foreach(n = 1:length(products_month)) %dopar% list.files(
+           paste(dir_data_remote_BGeoTif_month, products_month[n], sep = "/"),
+           pattern="_",recursive=TRUE))
+
+#===============================================================================
+# 1. CREATE NEW PARAMETER FILES
+#===============================================================================
+
+ source(paste(dir_code,"4_Crop_To_Runset_Sub_EditGlobalParam.R",sep=sep))
+ source(paste(dir_code,"4_Crop_To_Runset_Sub_EditGlobalSetup.R",sep=sep))
+  
 
 
 #---------------------------------------------------------------------------------
 # Move the existing analysis folder if it exists and you want to save
-# ONLY DOES THIS IF THERE IS DATA!
+# Rather than delete anything, I just move it to a new subfolder
 #---------------------------------------------------------------------------------
-if(SaveAnalysis == TRUE){
-  if(verbose){message("  2. Looking for old analysis to save from deletion")}
-  if(dir.exists(dir_runset)){
-    # IF there is analysis already done, copy it
-    if(length(list.files(dir_analysis_raw))>0){
-      newfolder <- paste(dir_analysis_raw,"OLD",Sys.Date(),sep="_")
+  dir_runset_data <-  paste(dir_runset,"Data",sep=sep)
+  dir_runset_code <-  paste(dir_runset,"Code",sep=sep)
+  
+if(SaveAnalysis == FALSE){
+   # delete the data folder
+   if(verbose){message("  4. Deleting the Runset data/analysis folder")}
+   
+   if(dir.exists(dir_runset_remote)){
+      file.remove(list.files(dir_runset_remote, 
+                             recursive = TRUE,include.dirs = TRUE,
+                             full.names = TRUE))
+      }   
+   
+}else{   
+  if(dir.exists(dir_runset_data)){
+     
+    if(length(list.files(dir_runset_data))>0){
+       if(verbose){message("  4. Backing up old data")}
+       
+      newfolder <- paste(dir_runset_data,"OLD",Sys.Date(),sep="_")
       nn=1
       while(dir.exists(newfolder)){
         newfolder <- paste(newfolder,n,sep="_")
@@ -186,49 +206,61 @@ if(SaveAnalysis == TRUE){
         if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
         if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
       }
-      if(verbose){message(paste("     a) Old raw output found, moving to subfolder:",newfolder))}
-      file.rename(dir_analysis_raw,newfolder)
+      if(verbose){message(paste("     a) Old Sat Data found, moving to subfolder:",newfolder))}
+      file.rename(dir_runset_data,newfolder)
     }
-    if(length(list.files(dir_analysis_vis))>0){
-      newfolder <- paste(dir_analysis_vis,"OLD",Sys.Date(),sep="_")
-      nn=1
-      while(dir.exists(newfolder)){
-        newfolder <- paste(newfolder,n,sep="_")
-        nn=nn+1
-        if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
-        if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+  } 
+     
+   if(dir.exists(dir_runset_code)){
+      if(length(list.files(dir_runset_code))>0){
+         if(verbose){message("  4. Backing up old code")}
+         
+         newfolder <- paste(dir_runset_code,"OLD",Sys.Date(),sep="_")
+         nn=1
+         while(dir.exists(newfolder)){
+           newfolder <- paste(newfolder,n,sep="_")
+           nn=nn+1
+           if(nn > 5){warning("You have 5 back up data folders, not a good way of storing your data")}
+           if(nn > 10){stop("You have 10 back up data folders, sort out your data storage")}
+         }
+         if(verbose){message(paste("     a) Old code found, moving to subfolder:",newfolder))}
+         file.rename(dir_runset_code,newfolder)
       }
-      if(verbose){message(paste("     a) Old visualisation found, moving to subfolder:",newfolder))}
-      file.rename(dir_analysis_vis,newfolder)
-    }        
-  }  
+   }   
+
 }
 
 #---------------------------------------------------------------------------------
-# And create the folder, then move over the directory structure
+# CREATE THE NEW FOLDER NAMES AND DIRECTORY STRUCTURE
 #---------------------------------------------------------------------------------
-if(verbose){message("  3. Creating subfolders")}
+if(verbose){message("  5. Creating subfolders")}
 
-conditionalcreate(dir_analysis_raw)
-conditionalcreate(dir_analysis_vis)
-conditionalcreate(dir_data_runset_override)
-dir_data_runset <- dir_data_runset_override
-dir_data_remote_runset <-  paste(dir_data_runset_override,"2_Remote_Sensing",sep=sep)
+# First deal with the new runset data location
+conditionalcreate(dir_runset_data)
+
+# If you want an override location for the data this will set it
+if(is.na(dir_data_runset_override)==FALSE){
+   conditionalcreate(dir_data_runset_override)
+   dir_data_runset <- dir_data_runset_override
+}else{
+   dir_data_runset <- dir_runset_data
+   conditionalcreate(dir_runset_data)
+}   
+
+dir_data_remote_runset <-  paste(dir_data_runset,"2_Remote_Sensing",sep=sep)
 conditionalcreate(dir_data_remote_runset)
 
 
-
-# this is a hack because the main repository is in a different place
-# TWEAK 2 https://workflowy.com/#/4f9e026a8440
-# ACTUALLY, ADD A PLACE FOR PEOPLE TO STORE THE DATA ?? No, with the runset code??
-# dir_data_runset now defined by user.
-
+# Now just auto move everything else over
 alldirs <- ls()
 alldirs <- alldirs[ grep("dir_",alldirs)]
 alldirs <- alldirs[-grep("dir_main",alldirs)]
 alldirs <- alldirs[-grep("dir_core",alldirs)]
 alldirs <- alldirs[-grep("dir_runset",alldirs)]
+alldirs <- alldirs[-grep("dir_GLOBAL",alldirs)]
 alldirs <- alldirs[-grep("dir_data_remote_ARaw",alldirs)]
+alldirs <- alldirs[-grep("dir_data_remote_CDerived",alldirs)]
+
 alldirs <- alldirs[-which(alldirs %in% "dir_data")]
 alldirs <- alldirs[-which(alldirs %in% "dir_data_runset")]
 alldirs <- alldirs[-which(alldirs %in% "dir_data_runset_override")]
@@ -238,10 +270,8 @@ alldirs <- alldirs[-which(alldirs %in% "dir_data_remote_runset")]
 
 alldirs <- sort(alldirs)
 
-
 for(counter in 1:length(alldirs)){
-  print(alldirs[counter])
-   
+ # print(alldirs[counter])
   dirnew <- eval(parse(text = alldirs[counter]))
   if(grepl("Data" ,dirnew)){
      dirout <-str_replace(dirnew,dir_data_remote,dir_data_remote_runset)
@@ -249,9 +279,8 @@ for(counter in 1:length(alldirs)){
      dirout <- str_replace(dirnew,"Core",paste("Runset",Runset,sep=sep))
   }
   conditionalcreate(dirout)
- 
+  
   if(alldirs[counter] %in% "dir_data_remote_BGeoTif_daily"){
-     # and each product
     for(p in products_daily){
       dirinprod <- paste(dir_data_remote_BGeoTif_daily,p,sep=sep)
       diroutprod <- str_replace(dirinprod,dir_data_remote,dir_data_remote_runset)
@@ -289,16 +318,16 @@ dir_data_remote_BGeoTif_pentad_runset <- str_replace(dir_data_remote_BGeoTif_pen
 dir_data_remote_BGeoTif_dekad_runset  <- str_replace(dir_data_remote_BGeoTif_dekad,dir_data_remote,dir_data_remote_runset)
 dir_data_remote_BGeoTif_month_runset  <- str_replace(dir_data_remote_BGeoTif_month,dir_data_remote,dir_data_remote_runset)
 
-
-
-if(verbose){message("  4. Loading global spatial meta data")}
+#---------------------------------------------------------------------------------
+# MOVING THE DATA
+#---------------------------------------------------------------------------------
+if(verbose){message("  6. Loading global spatial meta data")}
 
 #---------------------------------------------------------------------------------
 # Read in test file from the main folder to get crs & check if there is data 
 # Needlessly complex so that it autochooses a folder with data in
 #---------------------------------------------------------------------------------
 movedata <- TRUE
-
 
 #=================================================================================
 # THIS SECTION CHECKS TO SEE THAT SATELLITE DATA EXISTS
@@ -372,7 +401,7 @@ if(flag_daily==FALSE){
   #---------------------------------------------------------------------------------
   # If daily data was found
   #---------------------------------------------------------------------------------
-  if(verbose){message("  5. Loading daily global meta data")}
+  if(verbose){message("  7. Loading daily global meta data")}
   flag_read <- FALSE; file_count <- 1
   
   repeat{
@@ -407,7 +436,7 @@ if(flag_daily==FALSE){
     #---------------------------------------------------------------------------------
     # If pentadal data was found
     #---------------------------------------------------------------------------------
-    if(verbose){message("  5. Loading pentadal global meta data")}
+    if(verbose){message("  7. Loading pentadal global meta data")}
     
     flag_read <- FALSE; file_count <- 1
     
@@ -443,7 +472,7 @@ if(flag_daily==FALSE){
     # If dekadal data was found
     #---------------------------------------------------------------------------------
     if(flag_dekad==FALSE){
-      if(verbose){message("  5. Loading dekadal global meta data")}
+      if(verbose){message("  7. Loading dekadal global meta data")}
       
       flag_read <- FALSE; file_count <- 1
       
@@ -477,7 +506,7 @@ if(flag_daily==FALSE){
       #---------------------------------------------------------------------------------
       # If monthly data was found
       #---------------------------------------------------------------------------------
-      if(verbose){message("  5. Loading monthly global meta data")}
+      if(verbose){message("  7. Loading monthly global meta data")}
       
       flag_read <- FALSE; file_count <- 1
       
@@ -512,69 +541,19 @@ if(flag_daily==FALSE){
 }
 
 if(movedata){ 
-  if(verbose){message("  6. Setting up data move")}
-  
-  #---------------------------------------------------------------------------------
-  # Read in the data, or make the lon/lat box extent
-  #---------------------------------------------------------------------------------
-  # IF CHOOSING A BOX
-  if(SubsetOption == 1){
-    newbox <- st_bbox(c(xmin = Box.MinLong, xmax = Box.MaxLong, 
-                        ymin = Box.MinLat, ymax = Box.MaxLat), crs = st_crs(samplefile))
-    newbox <- st_bbox(extend(extent(newbox),Box.buffer),crs = st_crs(samplefile))
-  }
-  
-  # IF CHOOSING A SHAPEFILE
-  if(SubsetOption %in% 2){
-    if(verbose){message(paste("      a. Using shapefile",Shapefile.Name,"to crop"))}
-    
-    # remove any spurious ".shps" in the file name
-    if(substr(Shapefile.Name,nchar(Shapefile.Name)-3,nchar(Shapefile.Name)) == ".shp"){
-      Shapefile.Name <- substr(Shapefile.Name,1,nchar(Shapefile.Name)-4)
-    }
-    
-    if(!file.exists(paste(Shapefile.Folder,"/",Shapefile.Name,".shp",sep=""))){stop("Your shapefile does not exist")}
-    
-    # read in the shapefile
-    boundary <- suppressMessages(suppressWarnings(st_read(Shapefile.Folder,Shapefile.Name,quiet=TRUE)))
-    boundary <- st_transform(boundary,st_crs(samplefile))
-    
-    # and choose just the region if selected
-    if(is.na(Shapefile.ColName) == FALSE){
-      if(verbose){message(paste("      b. Subsetting shapefile to polygons where",Shapefile.ColName,"=",Shapefile.ColValue))}
-      
-      colloc <- which(toupper(names(boundary)) %in% toupper(Shapefile.ColName))
-      
-      if(!(Shapefile.ColValue %in% unique(st_drop_geometry(boundary)[,colloc]))){
-        print(cat(paste("There is no value of ",Shapefile.ColValue,"in the shapefile column",Shapefile.ColName, "\n Please choose out of:\n")))
-        print(unique(st_drop_geometry(boundary)[,colloc]))
-        stop()
-      }
-      boundary <- boundary %>% dplyr::filter_at(colloc, dplyr::all_vars(. == Shapefile.ColValue))
-    }
-    if(toupper(Shapefile.croptype) == "BOX"){
-      if(verbose){message("      a. Using a BOX to subset the data to:")}
-      newbox <- st_bbox(extend(extent(boundary),Box.buffer),crs = st_crs(samplefile))
-    }else{
-      newbox <- boundary
-    }
-    terrabbox <- ext(as.numeric(newbox$xmin),
-                     as.numeric(newbox$xmax),
-                     as.numeric(newbox$ymin),
-                     as.numeric(newbox$ymax))
-  }  
+  if(verbose){message("  8. Setting up data move")}
   
   #---------------------------------------------------------------------------------
   # Record extent
   #---------------------------------------------------------------------------------
-  if(verbose){message("  7. Outputting new extent")}
-  png(paste(dir_runset,paste("0CroppedArea_",Runset,".png",sep=""),sep=sep))
+  if(verbose){message("  8. Outputting new extent")}
+  png(paste(dir_runset,paste("CroppedArea_",Runset,".png",sep=""),sep=sep))
   plot(crop(samplefile,newbox),main=paste(Runset,": Cropped area",sep=""),asp=1)
   if(SubsetOption %in% 2){
      plot(st_geometry(boundary),add=TRUE)
   }     
   dev.off()
-  write.csv(print(newbox),paste(dir_runset,paste("0MetaData_",Runset,".csv",sep=""),sep=sep))
+  write.csv(print(newbox),paste(dir_runset,paste("MetaData_",Runset,".csv",sep=""),sep=sep))
   
   
   #---------------------------------------------------------------------------------
@@ -620,7 +599,7 @@ if(movedata){
   # DAILY
   
   n<-1
-  if(verbose){message("  8. Cropping daily data")}
+  if(verbose){message("  9. Cropping daily data")}
   if(length(products_daily)>0){
     
     for(p in 1:length(products_daily)){
@@ -651,7 +630,7 @@ if(movedata){
   
   # PENTAD
   
-  if(verbose){message("  9. Cropping pentadal data")}
+  if(verbose){message("  10. Cropping pentadal data")}
   if(length(products_pentad)>0){
     for(p in 1:length(products_pentad)){
       a <- Sys.time()
@@ -680,7 +659,7 @@ if(movedata){
   
   # DEKAD
   
-  if(verbose){message("  10. Cropping dekadal data")}
+  if(verbose){message("  11. Cropping dekadal data")}
   if(length(products_dekad)>0){
     for(p in 1:length(products_dekad)){
       a <- Sys.time()
@@ -707,7 +686,7 @@ if(movedata){
   
   
   # MONTH
-  if(verbose){message("  11. Cropping monthly data")}
+  if(verbose){message("  12. Cropping monthly data")}
   
   if(length(products_month)>0){
     
@@ -742,8 +721,22 @@ if(movedata){
 # And create the project file
 #------------------------------------------------------------------------------
 projfile <- list.files(dir_core)[grep(".rproj",tolower(list.files(dir_core)))]
-newprojfile <- paste("Step0_",Runset,"PROJECT.Rproj",sep="")
+newprojfile <- paste("Step0_",Runset,"_PROJECT.Rproj",sep="")
 tmp  <- file.copy(from=paste(dir_core,projfile,sep=sep),to=paste(dir_runset,newprojfile,sep=sep))  
+
+
+#------------------------------------------------------------------------------
+# And finally, move the up to date code over
+#------------------------------------------------------------------------------
+tomove <- list.files(paste(dir_code,"Runset Functions","MainFolder",sep=sep),full.names = TRUE,include.dirs = TRUE)
+fnames <- list.files(paste(dir_code,"Runset Functions","MainFolder",sep=sep))
+tmp  <- file.copy(from=tomove,to=paste(dir_runset,fnames,sep=sep))  
+
+#------------------------------------------------------------------------------
+tomove <- list.files(paste(dir_code,"Runset Functions","CodeFolder",sep=sep),full.names = TRUE,include.dirs = TRUE)
+fnames <- list.files(paste(dir_code,"Runset Functions","CodeFolder",sep=sep))
+tmp  <- file.copy(from=tomove,to=paste(dir_runset,"Code",fnames,sep=sep))  
+
 
 
 #------------------------------------------------------------------------------ 
