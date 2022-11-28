@@ -505,38 +505,6 @@ pentadalmissing <- function(dates,datasetpentaddir,missinglimitpentad){
    return(fulldatelist)
 }
 
-#==========================================================================================================================
-# PENTADSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
-#==========================================================================================================================
-pentadsumfunct <- function(nnn,fulldatelist,dir_data_remote_BGeoTif_daily,datasetpentaddir,dataset,files_in.daily,dates,overwrite,family){
-   #------------------------------------------------------------------------------
-   # get the pentad wanted and make the output file name
-   #------------------------------------------------------------------------------
-   pentadyear <- fulldatelist$pentadyear[nnn]
-   outputfile <- paste(datasetpentaddir,fulldatelist$year[nnn],paste(dataset,"_pentad_",pentadyear,".tif",sep=""),sep=sep)
-   
-   #------------------------------------------------------------------------------
-   # if the outputfile exists, male the input filename
-   #------------------------------------------------------------------------------
-   if((overwrite==TRUE)|(!file.exists(outputfile))){
-      inputfiles <- paste(dir_data_remote_BGeoTif_daily,dataset,
-                          files_in.daily[which(as.Date(substr(files_in.daily,nchar(files_in.daily)-13,nchar(files_in.daily)-4),format="%Y-%m-%d")%in%  
-                                                  dates$Date[dates$YearPentad %in% pentadyear])],sep=sep)
-      if(length(inputfiles) > 2){
-         if(family %in% c("rain","tmin","tmax","rhum")){
-            suppressMessages(suppressWarnings(terra::writeRaster(round(mean(rast(inputfiles)),1), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
-         }else{
-            suppressMessages(suppressWarnings(terra::writeRaster(mean(rast(inputfiles)), filename=outputfile, filetype="GTiff",overwrite=TRUE)))
-            
-         }            
-      }
-      
-   }   
-   return(outputfile)
-}
-
-
-
 
 
 
@@ -655,7 +623,8 @@ dekadalmissing <- function(dates,datasetdekaddir,missinglimitdekad){
 # DEKADSUMFUNCT: takes the raster mean and saves it to a new geotif, ignoring existing files
 #==========================================================================================================================
 dekadsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetdekaddir,dataset,files_in.daily,dates,overwrite,family){
-   require(Greatrex.Functions)
+   require(terra)
+   
    #------------------------------------------------------------------------------
    # get the dekad wanted and make the output file name
    #------------------------------------------------------------------------------
@@ -761,6 +730,8 @@ monthmissing <- function(dates,datasetmonthdir,missinglimitmonth){
 #==========================================================================================================================
 monthsumfunct <- function(n,fulldatelist,dir_data_remote_BGeoTif_daily,datasetmonthdir,dataset,files_in.daily,dates,overwrite,family){
    require(Greatrex.Functions)
+   require(terra)
+   
    #------------------------------------------------------------------------------
    # get the dekad wanted and make the output file name
    #------------------------------------------------------------------------------
